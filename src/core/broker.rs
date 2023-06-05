@@ -1,4 +1,5 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::fmt;
 
 use crate::core::order::*;
 use crate::dataframe::ticker::Ticker;
@@ -20,8 +21,8 @@ pub enum BrokerError {
 
 pub struct Broker {
     name: String,
-    strategy: Strategy,
-    initial_cash: f32,
+    strategy: Vec<Box<dyn Strategy>>,
+    pub initial_cash: f32,
     commission: f32,
     margin: f32,
     trade_on_close: bool,
@@ -29,8 +30,8 @@ pub struct Broker {
 
     /// Internal bookkeeping of all orders placed.
     orders: HashMap<OrderId, Order>,
-    current_cash: f32,
-    positions: HashMap<String, Position>
+    pub current_cash: f32,
+    positions: HashMap<String, Position>,
 }
 
 /// The main entity that a strategy interacts with throughout the core event loop.
@@ -41,7 +42,7 @@ pub struct Broker {
 impl Broker {
     pub fn new(
         name: &str,
-        strategy: Strategy,
+        strategy: Vec<Box<dyn Strategy>>,
         initial_cash: f32,
         commission: f32,
         margin: f32,
@@ -64,7 +65,10 @@ impl Broker {
 
     pub fn next(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
         self.process_orders(ticker)?;
-        self.strategy.on_ticker(ticker);
+
+        for strategy in &mut self.strategy {
+            strategy.on_ticker(ticker);
+        }
 
         Ok(())
     }
@@ -89,16 +93,19 @@ impl Broker {
                     todo!("Update the position");
                 } else {
                     // We have not yet established a position. We need to create a position.
-                    self.positions.insert(order.symbol.clone(), Position {
-                        symbol: order.symbol.clone(),
-                        amount: order.quantity,
-                        price: ticker.close,
-                    });
+                    self.positions.insert(
+                        order.symbol.clone(),
+                        Position {
+                            symbol: order.symbol.clone(),
+                            amount: order.quantity,
+                            price: ticker.close,
+                        },
+                    );
                     // And update the current balance
                     self.current_cash -= ticker.close;
                 }
-            },
-            OrderSide::Sell =>  {
+            }
+            OrderSide::Sell => {
                 if let Some(Position) = self.positions.remove(&order.symbol) {
                     todo!("Update the position");
                 } else {
@@ -111,9 +118,9 @@ impl Broker {
     }
 
     /// Processes all the withstanding orders in the order book.
-    /// This function mainly handles the order processing logic, but the 
+    /// This function mainly handles the order processing logic, but the
     /// actual order execution is performed in 'execute_order'.
-    /// 
+    ///
     /// # TODO
     /// There needs to be some sense of time delay
     fn process_orders(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
@@ -122,28 +129,36 @@ impl Broker {
             match order.order_type {
                 OrderType::Market => self.execute_order(order, ticker)?,
                 OrderType::Limit(price) => match order.side {
-                    OrderSide::Buy => if ticker.close <= price {
-                        self.execute_order(order, ticker)?;
-                    } else {
-                        non_executed_orders.insert(id, order);
-                    },
-                    OrderSide::Sell => if ticker.close >= price {
-                        self.execute_order(order, ticker)?;
-                    } else {
-                        non_executed_orders.insert(id, order);
-                    },
+                    OrderSide::Buy => {
+                        if ticker.close <= price {
+                            self.execute_order(order, ticker)?;
+                        } else {
+                            non_executed_orders.insert(id, order);
+                        }
+                    }
+                    OrderSide::Sell => {
+                        if ticker.close >= price {
+                            self.execute_order(order, ticker)?;
+                        } else {
+                            non_executed_orders.insert(id, order);
+                        }
+                    }
                 },
                 OrderType::Stop(price) => match order.side {
-                    OrderSide::Buy => if ticker.close >= price {
-                        self.execute_order(order, ticker)?;
-                    } else {
-                        non_executed_orders.insert(id, order);
-                    },
-                    OrderSide::Sell => if ticker.close <= price {
-                        self.execute_order(order, ticker)?;
-                    } else {
-                        non_executed_orders.insert(id, order);
-                    },
+                    OrderSide::Buy => {
+                        if ticker.close >= price {
+                            self.execute_order(order, ticker)?;
+                        } else {
+                            non_executed_orders.insert(id, order);
+                        }
+                    }
+                    OrderSide::Sell => {
+                        if ticker.close <= price {
+                            self.execute_order(order, ticker)?;
+                        } else {
+                            non_executed_orders.insert(id, order);
+                        }
+                    }
                 },
                 OrderType::MarketOnClose => {
                     todo!("Implement logic to determine if the market is closing");
@@ -160,4 +175,3 @@ impl Broker {
     }
     // pub fn place_order(&mut self, order: Order) -> Result<(), BrokerError>;
 }
-

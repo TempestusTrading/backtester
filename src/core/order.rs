@@ -8,7 +8,7 @@ pub enum OrderSide {
 
 #[derive(Debug, Clone)]
 pub enum OrderType {
-    Market, // https://www.investopedia.com/terms/m/marketorder.asp
+    Market,     // https://www.investopedia.com/terms/m/marketorder.asp
     Limit(f32), // https://www.investopedia.com/terms/l/limitorder.asp
     Stop(f32),
     // StopLimit,
@@ -36,12 +36,7 @@ pub struct Order {
 }
 
 impl Order {
-    pub fn new(
-        symbol: String,
-        quantity: f32,
-        side: OrderSide,
-        order_type: OrderType,
-    ) -> Order {
+    pub fn new(symbol: String, quantity: f32, side: OrderSide, order_type: OrderType) -> Order {
         Order {
             symbol,
             quantity,
