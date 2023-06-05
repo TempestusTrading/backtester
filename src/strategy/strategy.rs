@@ -1,43 +1,43 @@
 use crate::dataframe::ticker::Ticker;
+use crate::indicators::indicator::Indicator;
 
-pub trait Strategy {
-	fn on_ticker(&mut self, ticker: Ticker);
-	fn on_order_filled();
-	fn on_order_changed();
-	fn update_indicators(&mut self, ticker: &Ticker);
+pub struct StrategyBuilder {
+    indicators: Vec<Box<dyn Indicator>>,
 }
 
-pub struct SimpleSMA {
-	close20Tickers: Vec<f32>,
-	sma20Tickers: f32
-} 
+impl StrategyBuilder {
+    pub fn new() -> StrategyBuilder {
+        StrategyBuilder {
+            indicators: Vec::new(),
+        }
+    }
 
-impl SimpleSMA {
-	pub fn new() -> SimpleSMA {
-		SimpleSMA { close20Tickers: vec![], sma20Tickers: 0.0 }
-	}
+    pub fn add_indicator(mut self, indicator: Box<dyn Indicator>) -> StrategyBuilder {
+        self.indicators.push(indicator);
+        self
+    }
+
+    pub fn build(self) -> Strategy {
+        Strategy { 
+            indicators: self.indicators 
+        }
+    }
 }
 
-impl Strategy for SimpleSMA {
-	fn on_ticker(&mut self, ticker: Ticker) {
-		self.update_indicators(&ticker);
+/// Any strategy that is to be used within the core event loop must implement
+/// this trait.
+///
+/// # Example
+///
+/// ```
+pub struct Strategy {
+    indicators: Vec<Box<dyn Indicator>>,
+}
 
-		if (self.sma20Tickers > ticker.close) {
-			println!("BUY!");
-		}
-	}
-
-	fn on_order_filled() {
-	}
-
-	fn on_order_changed() {
-	}
-
-	fn update_indicators(&mut self, ticker: &Ticker) {
-		self.close20Tickers.push(ticker.close);
-		if self.close20Tickers.len() == 21 {
-			let first_ticker = self.close20Tickers.remove(0);
-			self.sma20Tickers = (20.0 * self.sma20Tickers - first_ticker + self.close20Tickers[19]) / 20.0;
-		}
-	}
+impl Strategy {
+    pub fn on_ticker(&mut self, ticker: &Ticker) {
+        for indicator in self.indicators.iter_mut() {
+            indicator.update(ticker);
+        }
+    }
 }

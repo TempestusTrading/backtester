@@ -1,4 +1,5 @@
-pub mod util;
+pub mod core;
 pub mod dataframe;
-pub mod miner;
+pub mod indicators;
 pub mod strategy;
+pub mod util;
