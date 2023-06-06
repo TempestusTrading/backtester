@@ -83,31 +83,55 @@ impl Broker {
         match order.side {
             OrderSide::Buy => {
                 if let Some(position) = self.positions.remove(&order.symbol) {
-                    println!("Buy");
-                    todo!("Update the position");
+                    // We already have a position in this symbol. We need to update the position.
+                    self.positions.insert(
+                        order.symbol.clone(),
+                        Position { 
+                            symbol: order.symbol, 
+                            amount: position.amount + order.quantity, 
+                            price: (position.amount * position.price + order.quantity * ticker.close) / (position.amount + order.quantity),
+                        }
+                    );
                 } else {
-                    // We have not yet established a position. We need to create a position.
-                    println!("Buy");
                     self.positions.insert(
                         order.symbol.clone(),
                         Position {
-                            symbol: order.symbol.clone(),
+                            symbol: order.symbol,
                             amount: order.quantity,
                             price: ticker.close,
                         },
                     );
-                    // And update the current balance
-                    self.current_cash -= ticker.close;
                 }
+                // TODO: The ticker.close is not explicitly used
+                // For example, in a limit order, the price is set.
+                // Also, we must factor in the commission.
+                self.current_cash -= order.quantity * ticker.close; 
             }
             OrderSide::Sell => {
-                if let Some(Position) = self.positions.remove(&order.symbol) {
-                    println!("Sell");
-                    // todo!("Update the position");
+                if let Some(position) = self.positions.remove(&order.symbol) {
+                    // We already have a position in this symbol. We need to update the position.
+                    let new_amount = position.amount - order.quantity;
+                    if new_amount.abs() > std::f32::EPSILON {
+                        self.positions.insert(
+                            order.symbol.clone(),
+                            Position {
+                                symbol: order.symbol,
+                                amount: new_amount,
+                                price: (position.amount * position.price - order.quantity * ticker.close) / (position.amount - order.quantity),
+                            },
+                        );
+                    }
                 } else {
-                    println!("Sell");
-                    // todo!("Add the ability to short");
+                    self.positions.insert(
+                        order.symbol.clone(),
+                        Position { 
+                            symbol: order.symbol, 
+                            amount: -order.quantity, 
+                            price: ticker.close, 
+                        }
+                    );
                 }
+                self.current_cash += order.quantity * ticker.close;
             }
         };
 
@@ -118,8 +142,7 @@ impl Broker {
     /// This function mainly handles the order processing logic, but the
     /// actual order execution is performed in 'execute_order'.
     ///
-    /// # TODO
-    /// There needs to be some sense of time delay
+    /// # TODO: There needs to be some sense of time delay
     fn process_orders(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
         let mut non_executed_orders = HashMap::new();
         for (id, order) in self.orders.clone() {

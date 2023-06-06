@@ -73,7 +73,7 @@ impl Iterator for TimeSeriesIntoIterator {
                 entries[self.column_indices[2]].parse::<f32>().unwrap(),
                 entries[self.column_indices[3]].parse::<f32>().unwrap(),
                 entries[self.column_indices[4]].parse::<u32>().unwrap(),
-                 0,
+                0,
                 // entries[self.column_indices[5]].parse::<u64>().unwrap(),
             ));
         }

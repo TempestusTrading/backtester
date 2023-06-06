@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
+use crate::core::broker::Broker;
 use crate::core::order::{Order, OrderSide, OrderType};
-use crate::core::broker::Broker;    
 use crate::dataframe::ticker::Ticker;
 use crate::indicators::indicator::Indicator;
 use crate::indicators::moving_average::MovingAverage;
@@ -27,7 +27,12 @@ impl Strategy for SMACrossoverStrategy {
     where
         Self: Sized,
     {
-        SMACrossoverStrategy { order_id: 0, previous_sma: 0.0, previous_ticker: None, indicators }
+        SMACrossoverStrategy {
+            order_id: 0,
+            previous_sma: 0.0,
+            previous_ticker: None,
+            indicators,
+        }
     }
 
     /// This is the main entry point for the strategy. This function will be called
@@ -43,12 +48,23 @@ impl Strategy for SMACrossoverStrategy {
         }
 
         let sma = self.indicators.get("sma").unwrap().get_value();
-        if let Some(previous_ticker ) = &self.previous_ticker {
+        if let Some(previous_ticker) = &self.previous_ticker {
             if sma > ticker.close && self.previous_sma < previous_ticker.close {
-                broker.submit_order(self.order_id, Order::new("AAPL".to_string(), 100.0, OrderSide::Buy, OrderType::Market));
+                broker.submit_order(
+                    self.order_id,
+                    Order::new("AAPL".to_string(), 100.0, OrderSide::Buy, OrderType::Market),
+                );
                 self.order_id += 1;
             } else if sma < ticker.close && self.previous_sma > previous_ticker.close {
-                broker.submit_order(self.order_id, Order::new("AAPL".to_string(), 100.0, OrderSide::Sell, OrderType::Market));
+                broker.submit_order(
+                    self.order_id,
+                    Order::new(
+                        "AAPL".to_string(),
+                        100.0,
+                        OrderSide::Sell,
+                        OrderType::Market,
+                    ),
+                );
                 self.order_id += 1;
             }
         }
