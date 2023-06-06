@@ -2,9 +2,11 @@ use backtester::core::broker::*;
 use backtester::core::bt::*;
 use backtester::dataframe::timeseries::*;
 use backtester::strategy::sma_crossover::*;
-use backtester::util::config::Config;
+use backtester::util::config::*;
+use log::{warn, info};
 
 fn main() {
+    env_logger::init();
     let config = Config::new();
     println!("{:?}", config);
 
