@@ -70,7 +70,7 @@ impl Backtest {
                 panic!("Broker error: {:?}", error);
             }
             // TODO: Implement communication channel between broker and strategy
-            self.strategy.on_ticker(&ticker);
+            self.strategy.on_ticker(&ticker, &mut self.broker);
         }
 
         BacktestResults {

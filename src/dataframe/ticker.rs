@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ticker {
     pub open: f32,
     pub high: f32,

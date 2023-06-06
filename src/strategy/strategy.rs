@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::core::broker::Broker;
 use crate::dataframe::ticker::Ticker;
 use crate::indicators::indicator::Indicator;
 
@@ -37,5 +38,5 @@ pub trait Strategy {
     fn with_indicators(indicators: HashMap<String, Box<dyn Indicator>>) -> Self
     where
         Self: Sized;
-    fn on_ticker(&mut self, ticker: &Ticker);
+    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker);
 }

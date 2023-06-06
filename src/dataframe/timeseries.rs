@@ -56,7 +56,7 @@ impl Iterator for TimeSeriesIntoIterator {
                         "low" => self.column_indices[2] = i,
                         "close" => self.column_indices[3] = i,
                         "volume" => self.column_indices[4] = i,
-                        "datetime" => self.column_indices[5] = i,
+                        "date" => self.column_indices[5] = i,
                         _ => (),
                     };
                 }
@@ -66,13 +66,15 @@ impl Iterator for TimeSeriesIntoIterator {
 
         if let Some(Ok(line)) = self.buffer.next() {
             let entries: Vec<&str> = line.split(',').collect();
+            println!("{:?}", entries);
             return Some(Ticker::new(
                 entries[self.column_indices[0]].parse::<f32>().unwrap(),
                 entries[self.column_indices[1]].parse::<f32>().unwrap(),
                 entries[self.column_indices[2]].parse::<f32>().unwrap(),
                 entries[self.column_indices[3]].parse::<f32>().unwrap(),
                 entries[self.column_indices[4]].parse::<u32>().unwrap(),
-                entries[self.column_indices[5]].parse::<u64>().unwrap(),
+                 0,
+                // entries[self.column_indices[5]].parse::<u64>().unwrap(),
             ));
         }
 

@@ -2,8 +2,8 @@ use std::env;
 
 #[derive(Debug)]
 pub struct Config {
-    root_directory: String,
-    gpu_enable: bool,
+    pub root_directory: String,
+    pub gpu_enable: bool,
 }
 
 impl Config {

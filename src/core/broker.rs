@@ -21,7 +21,6 @@ pub enum BrokerError {
 
 pub struct Broker {
     name: String,
-    strategy: Vec<Box<dyn Strategy>>,
     pub initial_cash: f32,
     commission: f32,
     margin: f32,
@@ -42,7 +41,6 @@ pub struct Broker {
 impl Broker {
     pub fn new(
         name: &str,
-        strategy: Vec<Box<dyn Strategy>>,
         initial_cash: f32,
         commission: f32,
         margin: f32,
@@ -51,7 +49,6 @@ impl Broker {
     ) -> Broker {
         Broker {
             name: name.to_string(),
-            strategy,
             initial_cash,
             commission,
             margin,
@@ -65,10 +62,6 @@ impl Broker {
 
     pub fn next(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
         self.process_orders(ticker)?;
-
-        for strategy in &mut self.strategy {
-            strategy.on_ticker(ticker);
-        }
 
         Ok(())
     }
@@ -90,9 +83,11 @@ impl Broker {
         match order.side {
             OrderSide::Buy => {
                 if let Some(position) = self.positions.remove(&order.symbol) {
+                    println!("Buy");
                     todo!("Update the position");
                 } else {
                     // We have not yet established a position. We need to create a position.
+                    println!("Buy");
                     self.positions.insert(
                         order.symbol.clone(),
                         Position {
@@ -107,9 +102,11 @@ impl Broker {
             }
             OrderSide::Sell => {
                 if let Some(Position) = self.positions.remove(&order.symbol) {
-                    todo!("Update the position");
+                    println!("Sell");
+                    // todo!("Update the position");
                 } else {
-                    todo!("Add the ability to short");
+                    println!("Sell");
+                    // todo!("Add the ability to short");
                 }
             }
         };
