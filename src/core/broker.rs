@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use std::error::Error;
+use std::fmt;
 use log::{warn, info};
 
 use crate::core::order::*;
@@ -19,6 +21,21 @@ pub enum BrokerError {
     InsufficientMargin,
     InvalidOrder,
 }
+
+/// Good reference for writing custom error types.
+/// https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/book/first-edition/error-handling.html
+impl fmt::Display for BrokerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            BrokerError::InsufficientFunds => write!(f, "Insufficient funds"),
+            BrokerError::InsufficientMargin => write!(f, "Insufficient margin"),
+            BrokerError::InvalidOrder => write!(f, "Invalid order"),
+        };
+        Ok(())
+    }
+}
+
+impl Error for BrokerError {}
 
 pub struct Broker {
     name: String,
@@ -93,7 +110,6 @@ impl Broker {
                             price: (position.amount * position.price + order.quantity * ticker.close) / (position.amount + order.quantity),
                         },
                     );
-                    info!("Bought {} shares @ {}, updating position", order.quantity, ticker.close);
                 } else {
                     self.positions.insert(
                         order.symbol.clone(),
@@ -103,11 +119,11 @@ impl Broker {
                             price: ticker.close, 
                         }
                     );
-                    info!("Bought {} shares @ {}", order.quantity, ticker.close);
                 }
                 // TODO: The ticker.close is not explicitly used
                 // For example, in a limit order, the price is set.
                 // Also, we must factor in the commission.
+                info!("Bought {} shares @ {}", order.quantity, ticker.close);
                 self.current_cash -= order.quantity * ticker.close; 
             }
             OrderSide::Sell => {
@@ -123,7 +139,6 @@ impl Broker {
                                 price: (position.amount * position.price - order.quantity * ticker.close) / (position.amount - order.quantity),
                             }
                         );
-                        info!("Sold {} shares @ {}, updating position", order.quantity, ticker.close);
                     }
                 } else {
                     self.positions.insert(
@@ -134,8 +149,8 @@ impl Broker {
                             price: ticker.close, 
                         }
                     );
-                    info!("Sold {} shares @ {}", order.quantity, ticker.close);
                 }
+                info!("Sold {} shares @ {}", order.quantity, ticker.close);
                 self.current_cash += order.quantity * ticker.close;
             }
         };
