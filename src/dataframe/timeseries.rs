@@ -1,27 +1,37 @@
-use std::{path::Path, io::Read};
-
-use csv;
+use std::path::Path;
 use std::fs::File;
 
-use crate::dataframe::ticker::Ticker;
+use csv;
 
-/// This struct provides a stream of 'Tickers' from a CSV file.
+use super::ticker::Ticker;
+
+/// Provides a stream of 'Tickers' from a CSV file.
 /// # Note
 /// This struct is lazily evaluated. Rather than loading the whole
-/// file into memory upon initialization, it will only create a 
-/// reader that will be loaded the next time the iterator is called.
-/// CONSIDER: WE MIGHT WANT TO BUFFER READING FROM THE FILE
+/// file into memory upon initialization, it creates a deserialized
+/// reader that can be turned into an iterator to load the data.
+/// # Example
+/// ```no_run
+/// use backtester::dataframe::timeseries::*;
+/// let timeseries = TimeSeries::from_csv("data/SPY.csv");
+/// for ticker in timeseries {
+///    println!("{:?}", ticker);
+/// }
+/// ```
 pub struct TimeSeries {
    reader: csv::DeserializeRecordsIntoIter<File, Ticker>,
 }
 
 impl TimeSeries {
+    /// Initializes a new TimeSeries from a CSV file.
+    /// Ensure that the CSV file contains the following columns:
+    /// open, high, low, close, volume, datetime.
+    /// Otherwise, deserialization will fail.
     pub fn from_csv<P: AsRef<Path>>(path: P) -> Self {
-        let reader: csv::DeserializeRecordsIntoIter<File, Ticker> = csv::Reader::from_path(path)
-            .unwrap()
+        let reader: csv::DeserializeRecordsIntoIter<File, Ticker> = csv::Reader::from_path(path.as_ref().clone())
+            .expect(&format!("Cannot not find file {}", path.as_ref().display()))
             .into_deserialize::<Ticker>();
 
-            // .expect(format!("Cannot find file {}", path.as_ref().display().to_str()));
         Self {
             reader
         }
