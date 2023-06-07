@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use log::{info, warn};
 use std::error::Error;
 use std::fmt;
-use log::{warn, info};
 
 use crate::core::order::*;
 use crate::dataframe::ticker::Ticker;
@@ -107,24 +107,26 @@ impl Broker {
                         Position {
                             symbol: order.symbol,
                             amount: position.amount + order.quantity,
-                            price: (position.amount * position.price + order.quantity * ticker.close) / (position.amount + order.quantity),
+                            price: (position.amount * position.price
+                                + order.quantity * ticker.close)
+                                / (position.amount + order.quantity),
                         },
                     );
                 } else {
                     self.positions.insert(
                         order.symbol.clone(),
-                        Position { 
-                            symbol: order.symbol, 
-                            amount: order.quantity, 
-                            price: ticker.close, 
-                        }
+                        Position {
+                            symbol: order.symbol,
+                            amount: order.quantity,
+                            price: ticker.close,
+                        },
                     );
                 }
                 // TODO: The ticker.close is not explicitly used
                 // For example, in a limit order, the price is set.
                 // Also, we must factor in the commission.
                 info!("Bought {} shares @ {}", order.quantity, ticker.close);
-                self.current_cash -= order.quantity * ticker.close; 
+                self.current_cash -= order.quantity * ticker.close;
             }
             OrderSide::Sell => {
                 if let Some(position) = self.positions.remove(&order.symbol) {
@@ -136,18 +138,20 @@ impl Broker {
                             Position {
                                 symbol: order.symbol,
                                 amount: new_amount,
-                                price: (position.amount * position.price - order.quantity * ticker.close) / (position.amount - order.quantity),
-                            }
+                                price: (position.amount * position.price
+                                    - order.quantity * ticker.close)
+                                    / (position.amount - order.quantity),
+                            },
                         );
                     }
                 } else {
                     self.positions.insert(
                         order.symbol.clone(),
-                        Position { 
-                            symbol: order.symbol, 
-                            amount: -order.quantity, 
-                            price: ticker.close, 
-                        }
+                        Position {
+                            symbol: order.symbol,
+                            amount: -order.quantity,
+                            price: ticker.close,
+                        },
                     );
                 }
                 info!("Sold {} shares @ {}", order.quantity, ticker.close);
