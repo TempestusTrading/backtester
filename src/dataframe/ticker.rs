@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[serde(untagged)]
 pub enum DatetimeField {
     Number(u64),
-    String(String)
+    String(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,14 +18,21 @@ pub struct Ticker {
 }
 
 impl Ticker {
-    pub fn new(open: f32, high: f32, low: f32, close: f32, volume: u32, datetime: DatetimeField) -> Ticker {
+    pub fn new(
+        open: f32,
+        high: f32,
+        low: f32,
+        close: f32,
+        volume: u32,
+        datetime: DatetimeField,
+    ) -> Ticker {
         Ticker {
             open,
             high,
             low,
             close,
             volume,
-            datetime
+            datetime,
         }
     }
 }
