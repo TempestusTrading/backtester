@@ -8,8 +8,10 @@ use crate::core::order::*;
 use crate::dataframe::ticker::Ticker;
 use crate::strategy::strategy::Strategy;
 
+type Symbol = String;
+
 #[derive(Debug, Clone)]
-struct Position {
+pub struct Position {
     symbol: String,
     amount: f32,
     price: f32,
@@ -38,24 +40,33 @@ impl fmt::Display for BrokerError {
 impl Error for BrokerError {}
 
 pub struct Broker {
-    name: String,
+    pub name: String,
     pub initial_cash: f32,
-    commission: f32,
-    margin: f32,
-    trade_on_close: bool,
-    hedging: bool,
+    pub commission: f32,
+    pub margin: f32,
+    pub trade_on_close: bool,
+    pub hedging: bool,
 
-    /// Internal bookkeeping of all orders placed.
-    orders: HashMap<OrderId, Order>,
+    /// Internal bookkeeping of all active_orders placed.
+    pub active_orders: HashMap<OrderId, Order>,
+    pub canceled_orders: HashMap<OrderId, Order>, // Keeps track of all the orders that were cancelled.
+    pub trades: HashMap<OrderId, Order>, // Keeps track of all the trades that were executed (orders that were filled)
     pub current_cash: f32,
-    positions: HashMap<String, Position>,
+    pub positions: HashMap<Symbol, Position>, // Keeps track of all the active positions
 }
 
 /// The main entity that a strategy interacts with throughout the core event loop.
-/// The Broker is responsible for maintaining bookkeeping of all orders placed,
+/// The Broker is responsible for maintaining bookkeeping of all active_orders placed,
 /// providing the strategy with information about the current state of the market,
 /// and managing the strategy's portfolio.
 ///
+/// If `trade_on_close` is `True`, allow trades to be executed on the close of a bar,
+/// rather than the next day.
+///
+/// If `hedging` is true, allow trades in both directions simultaneously.
+/// Otherwise, opposite-facing orders first close existing trades in a [FIFO] manner.
+///
+/// Consider: exclusive_orders
 impl Broker {
     pub fn new(
         name: &str,
@@ -72,26 +83,28 @@ impl Broker {
             margin,
             trade_on_close,
             hedging,
-            orders: HashMap::new(),
+            active_orders: HashMap::new(),
+            canceled_orders: HashMap::new(),
+            trades: HashMap::new(),
             current_cash: initial_cash,
             positions: HashMap::new(),
         }
     }
 
     pub fn next(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
-        self.process_orders(ticker)?;
+        self.process_active_orders(ticker)?;
 
         Ok(())
     }
 
     pub fn submit_order(&mut self, id: OrderId, order: Order) -> Result<(), BrokerError> {
-        self.orders.insert(id, order);
+        self.active_orders.insert(id, order);
 
         Ok(())
     }
 
     pub fn cancel_order(&mut self, id: OrderId) -> Result<(), BrokerError> {
-        self.orders.remove(&id);
+        self.active_orders.remove(&id);
 
         Ok(())
     }
@@ -164,14 +177,14 @@ impl Broker {
         Ok(())
     }
 
-    /// Processes all the withstanding orders in the order book.
+    /// Processes all the withstanding active_orders in the order book.
     /// This function mainly handles the order processing logic, but the
     /// actual order execution is performed in 'execute_order'.
     ///
     /// # TODO: There needs to be some sense of time delay
-    fn process_orders(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
-        let mut non_executed_orders = HashMap::new();
-        for (id, order) in self.orders.clone() {
+    fn process_active_orders(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
+        let mut non_executed_active_orders = HashMap::new();
+        for (id, order) in self.active_orders.clone() {
             match order.order_type {
                 OrderType::Market => self.execute_order(order, ticker)?,
                 OrderType::Limit(price) => match order.side {
@@ -179,14 +192,14 @@ impl Broker {
                         if ticker.close <= price {
                             self.execute_order(order, ticker)?;
                         } else {
-                            non_executed_orders.insert(id, order);
+                            non_executed_active_orders.insert(id, order);
                         }
                     }
                     OrderSide::Sell => {
                         if ticker.close >= price {
                             self.execute_order(order, ticker)?;
                         } else {
-                            non_executed_orders.insert(id, order);
+                            non_executed_active_orders.insert(id, order);
                         }
                     }
                 },
@@ -195,14 +208,14 @@ impl Broker {
                         if ticker.close >= price {
                             self.execute_order(order, ticker)?;
                         } else {
-                            non_executed_orders.insert(id, order);
+                            non_executed_active_orders.insert(id, order);
                         }
                     }
                     OrderSide::Sell => {
                         if ticker.close <= price {
                             self.execute_order(order, ticker)?;
                         } else {
-                            non_executed_orders.insert(id, order);
+                            non_executed_active_orders.insert(id, order);
                         }
                     }
                 },
@@ -215,7 +228,7 @@ impl Broker {
             }
         }
 
-        self.orders = non_executed_orders;
+        self.active_orders = non_executed_active_orders;
 
         Ok(())
     }

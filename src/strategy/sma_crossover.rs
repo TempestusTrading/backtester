@@ -47,29 +47,30 @@ impl Strategy for SMACrossoverStrategy {
             indicator.update(ticker);
         }
 
-        let sma = self.indicators.get("sma").unwrap().get_value();
-        if let Some(previous_ticker) = &self.previous_ticker {
-            if sma > ticker.close && self.previous_sma < previous_ticker.close {
-                broker.submit_order(
-                    self.order_id,
-                    Order::new("AAPL".to_string(), 100.0, OrderSide::Buy, OrderType::Market),
-                );
-                self.order_id += 1;
-            } else if sma < ticker.close && self.previous_sma > previous_ticker.close {
-                broker.submit_order(
-                    self.order_id,
-                    Order::new(
-                        "AAPL".to_string(),
-                        100.0,
-                        OrderSide::Sell,
-                        OrderType::Market,
-                    ),
-                );
-                self.order_id += 1;
+        if let Some(sma) = self.indicators.get("sma").unwrap().get_value() {
+            if let Some(previous_ticker) = &self.previous_ticker {
+                if sma > ticker.close && self.previous_sma < previous_ticker.close {
+                    broker.submit_order(
+                        self.order_id,
+                        Order::new("AAPL".to_string(), 100.0, OrderSide::Buy, OrderType::Market),
+                    );
+                    self.order_id += 1;
+                } else if sma < ticker.close && self.previous_sma > previous_ticker.close {
+                    broker.submit_order(
+                        self.order_id,
+                        Order::new(
+                            "AAPL".to_string(),
+                            100.0,
+                            OrderSide::Sell,
+                            OrderType::Market,
+                        ),
+                    );
+                    self.order_id += 1;
+                }
             }
-        }
 
-        self.previous_sma = sma;
-        self.previous_ticker = Some(ticker.clone());
+            self.previous_sma = sma;
+            self.previous_ticker = Some(ticker.clone());
+        }
     }
 }

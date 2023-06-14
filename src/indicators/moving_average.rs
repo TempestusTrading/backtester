@@ -4,7 +4,7 @@ use crate::indicators::indicator::Indicator;
 pub struct MovingAverage {
     period: u32,
     values: Vec<f32>,
-    pub value: f32,
+    pub value: Option<f32>,
 }
 
 impl MovingAverage {
@@ -12,7 +12,7 @@ impl MovingAverage {
         MovingAverage {
             period,
             values: Vec::new(),
-            value: 0.0,
+            value: None,
         }
     }
 }
@@ -20,7 +20,10 @@ impl MovingAverage {
 impl Indicator for MovingAverage {
     fn update(&mut self, ticker: &Ticker) {
         self.values.push(ticker.close);
-        if self.values.len() > self.period as usize {
+
+        if self.values.len() < self.period as usize {
+            return;
+        } else {
             self.values.remove(0);
         }
 
@@ -28,10 +31,11 @@ impl Indicator for MovingAverage {
         for value in &self.values {
             sum += value;
         }
-        self.value = sum / self.values.len() as f32;
+
+        self.value = Some(sum / self.values.len() as f32);
     }
 
-    fn get_value(&self) -> f32 {
+    fn get_value(&self) -> Option<f32> {
         self.value
     }
 }

@@ -1,5 +1,5 @@
-use std::path::Path;
 use std::fs::File;
+use std::path::Path;
 
 use csv;
 
@@ -19,7 +19,7 @@ use super::ticker::Ticker;
 /// }
 /// ```
 pub struct TimeSeries {
-   reader: csv::DeserializeRecordsIntoIter<File, Ticker>,
+    reader: csv::DeserializeRecordsIntoIter<File, Ticker>,
 }
 
 impl TimeSeries {
@@ -28,13 +28,12 @@ impl TimeSeries {
     /// open, high, low, close, volume, datetime.
     /// Otherwise, deserialization will fail.
     pub fn from_csv<P: AsRef<Path>>(path: P) -> Self {
-        let reader: csv::DeserializeRecordsIntoIter<File, Ticker> = csv::Reader::from_path(path.as_ref().clone())
-            .expect(&format!("Cannot not find file {}", path.as_ref().display()))
-            .into_deserialize::<Ticker>();
+        let reader: csv::DeserializeRecordsIntoIter<File, Ticker> =
+            csv::Reader::from_path(path.as_ref().clone())
+                .expect(&format!("Cannot not find file {}", path.as_ref().display()))
+                .into_deserialize::<Ticker>();
 
-        Self {
-            reader
-        }
+        Self { reader }
     }
 }
 
@@ -43,8 +42,8 @@ impl IntoIterator for TimeSeries {
     type IntoIter = TimeSeriesIntoIterator;
 
     fn into_iter(self) -> Self::IntoIter {
-        TimeSeriesIntoIterator { 
-            deserialized_reader: self.reader 
+        TimeSeriesIntoIterator {
+            deserialized_reader: self.reader,
         }
     }
 }
