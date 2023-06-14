@@ -1,4 +1,4 @@
-use super::{Indicator, IndicatorError, IndicatorResult, Ticker};
+use super::{Indicator, IndicatorResult, IndicatorError, Ticker};
 
 /// # Relative Strength Index
 /// https://www.investopedia.com/terms/r/rsi.asp
@@ -37,6 +37,8 @@ impl RSI {
 }
 
 impl Indicator for RSI {
+    type Result = f32;
+
     fn update(&mut self, ticker: &Ticker) -> IndicatorResult<()> {
         let current_gain = if ticker.close > ticker.open {
             ticker.close - ticker.open
@@ -49,7 +51,7 @@ impl Indicator for RSI {
             0.0
         };
 
-        if self.values.len() < self.period {
+        if self.values.len() < self.period as usize {
             self.gains.push(current_gain);
             self.losses.push(current_loss);
             return Ok(());
@@ -61,13 +63,13 @@ impl Indicator for RSI {
         let step_one = 100.0 - (100.0 / (1.0 + (average_gain / average_loss)));
 
         if self.smooth {
-            let step_two = 100
-                - (100
-                    / (1 + ((self.previous_average_gain * (self.period - 1) + current_gain)
-                        / (self.previous_average_loss * (self.period - 1) + current_loss))));
-            self.value = Some(step_two)
+            let step_two = 100.0
+                - (100.0
+                    / (1.0 + ((self.previous_average_gain * (self.period - 1) as f32 + current_gain)
+                        / (self.previous_average_loss * (self.period - 1) as f32 + current_loss))));
+            self.values.push(step_two);
         } else {
-            self.value = Some(step_one);
+            self.values.push(step_one);
         }
 
         self.previous_average_gain = average_gain;
@@ -75,17 +77,17 @@ impl Indicator for RSI {
         Ok(())
     }
 
-    fn get_value(&self) -> IndicatorResult<f32> {
-        if self.values.is_empty() {
-            return Err(IndicatorError::InsufficientData);
+    fn get_value(&self) -> IndicatorResult<Self::Result> {
+        match !self.values.is_empty() {
+            true => Ok(*self.values.last().unwrap()), 
+            false => Err(IndicatorError::InsufficientData),
         }
-        Ok(self.values.last().copied())
     }
 
-    fn at(&self, index: usize) -> IndicatorResult<f32> {
-        if index < self.values.len() {
-            Ok(self.values[index])
+    fn at(&self, index: usize) -> IndicatorResult<Self::Result> {
+        match index < self.values.len() {
+            true => Ok(*self.values.get(index).unwrap()),
+            false => Err(IndicatorError::IndexOutOfRange),
         }
-        Err(IndicatorError::IndexOutOfRange)
     }
 }

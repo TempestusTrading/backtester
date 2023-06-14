@@ -7,24 +7,19 @@ use serde_derive::{Deserialize, Serialize};
 use std::time::{Instant, Duration};
 
 pub struct BacktestBuilder {
-    feed: Box<TimeSeries>,
+    feed: Vec<Box<TimeSeries>>,
     broker: Broker,
     strategy: Box<dyn Strategy>,
 }
 
 impl BacktestBuilder {
-    pub fn new(feed: Box<TimeSeries>, broker: Broker, strategy: Box<dyn Strategy>) -> Self {
+    pub fn new(feed: Vec<Box<TimeSeries>>, broker: Broker, strategy: Box<dyn Strategy>) -> Self {
         Self {
-            feed: feed,
+            feed,
             broker,
             strategy,
         }
     }
-
-    // pub fn add_feed(mut self, feed: TimeSeries) -> Self {
-    //     self.feed = feed;
-    //     self
-    // }
 
     pub fn set_broker(mut self, broker: Broker) -> Self {
         self.broker = broker;
@@ -44,7 +39,7 @@ impl BacktestBuilder {
 }
 
 pub struct Backtest {
-    feed: Box<TimeSeries>,
+    feed: Vec<Box<TimeSeries>>,
     broker: Broker,
 
     // Strategy makes a series of decisions based on indicators. Thus, we do not need
@@ -54,7 +49,7 @@ pub struct Backtest {
 }
 
 impl Backtest {
-    pub fn new(feed: TimeSeries, broker: Broker, strategy: Box<dyn Strategy>) -> Self {
+    pub fn new(feed: Vec<Box<TimeSeries>>, broker: Broker, strategy: Box<dyn Strategy>) -> Self {
         Self {
             feed,
             broker,
@@ -65,14 +60,14 @@ impl Backtest {
     pub fn run(mut self) -> BacktestResults {
         let start = Instant::now();
 
-        for ticker in self.feed {
-            if let Err(error) = self.broker.next(&ticker) {
-                panic!("Broker error: {:?}", error);
+        for ts in self.feed {
+            for ticker in *ts {
+                let ticker = ticker.expect("Failed to get ticker.");
+                self.broker.next(&ticker).expect_err("Broker experienced an error.");
+                self.strategy.on_ticker(&ticker, &mut self.broker);
             }
-            // TODO: Implement communication channel between broker and strategy
-            self.strategy.on_ticker(&ticker, &mut self.broker);
         }
-
+        
         BacktestResults {
             runtime: start.elapsed(),
             starting_amount: self.broker.initial_cash,

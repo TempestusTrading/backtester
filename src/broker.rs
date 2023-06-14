@@ -15,6 +15,8 @@ pub enum BrokerError {
     InvalidOrder,
 }
 
+pub type BrokerResult<T> = Result<T, BrokerError>;
+
 pub struct Broker {
     pub name: String,
     pub initial_cash: f32,

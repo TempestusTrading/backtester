@@ -1,42 +1,22 @@
 mod sma_crossover;
 
-pub use crate::{broker::Broker, indicators::Indicator, types::Ticker};
+pub use crate::{
+    broker::{Broker, BrokerError}, 
+    indicators::Indicator, 
+    types::Ticker
+};
 
-use std::collections::HashMap;
-
-pub struct StrategyBuilder {
-    indicators: HashMap<String, Box<dyn Indicator>>,
-}
-
-impl StrategyBuilder {
-    pub fn new() -> StrategyBuilder {
-        StrategyBuilder {
-            indicators: HashMap::new(),
-        }
-    }
-
-    pub fn add_indicator(mut self, id: &str, indicator: Box<dyn Indicator>) -> StrategyBuilder {
-        self.indicators.insert(id.to_string(), indicator);
-        self
-    }
-
-    pub fn build<T>(self) -> T
-    where
-        T: Strategy,
-    {
-        T::with_indicators(self.indicators)
-    }
+pub enum StrategyError {
+    // Placeholder
+    Invalid,
+    // The broker experienced an error while processing the strategy's action.
+    BrokerError
 }
 
 /// Any strategy that is to be used within the core event loop must implement
 /// this trait.
 ///
-/// # Example
-///
 /// ```
 pub trait Strategy {
-    fn with_indicators(indicators: HashMap<String, Box<dyn Indicator>>) -> Self
-    where
-        Self: Sized;
-    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker);
+    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError>;
 }

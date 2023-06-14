@@ -26,6 +26,8 @@ impl SMA {
 }
 
 impl Indicator for SMA {
+    type Result = f32;
+
     fn update(&mut self, ticker: &Ticker) -> IndicatorResult<()> {
         self.values.push(ticker.close);
 
@@ -44,16 +46,16 @@ impl Indicator for SMA {
         Ok(())
     }
 
-    fn get_value(&self) -> IndicatorResult<f32> {
+    fn get_value(&self) -> IndicatorResult<Self::Result> {
         if self.values.is_empty() {
             return Err(IndicatorError::InsufficientData);
         }
-        Ok(self.values.last().copied())
+        Ok(*self.values.last().unwrap())
     }
 
-    fn at(&self, index: usize) -> IndicatorResult<f32> {
+    fn at(&self, index: usize) -> IndicatorResult<Self::Result> {
         if index < self.values.len() {
-            Ok(self.values[index])
+            return Ok(*self.values.get(index).unwrap())
         }
         Err(IndicatorError::IndexOutOfRange)
     }
