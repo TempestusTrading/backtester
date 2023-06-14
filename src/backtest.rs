@@ -1,10 +1,6 @@
-use crate::{
-	timeseries::TimeSeries,
-	broker::Broker,
-	strategy::Strategy, 
-};
+use crate::{broker::Broker, strategy::Strategy, timeseries::TimeSeries};
 use serde_derive::{Deserialize, Serialize};
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 pub struct BacktestBuilder {
     feed: Vec<Box<TimeSeries>>,
@@ -63,11 +59,13 @@ impl Backtest {
         for ts in self.feed {
             for ticker in *ts {
                 let ticker = ticker.expect("Failed to get ticker.");
-                self.broker.next(&ticker).expect_err("Broker experienced an error.");
+                self.broker
+                    .next(&ticker)
+                    .expect_err("Broker experienced an error.");
                 self.strategy.on_ticker(&ticker, &mut self.broker);
             }
         }
-        
+
         BacktestResults {
             runtime: start.elapsed(),
             starting_amount: self.broker.initial_cash,

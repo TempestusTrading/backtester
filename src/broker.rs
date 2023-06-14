@@ -17,6 +17,18 @@ pub enum BrokerError {
 
 pub type BrokerResult<T> = Result<T, BrokerError>;
 
+/// The main entity that a strategy interacts with throughout the core event loop.
+/// The Broker is responsible for maintaining bookkeeping of all `active_orders` placed,
+/// providing the strategy with information about the current state of the market,
+/// and managing the strategy's portfolio.
+///
+/// If `trade_on_close` is `True`, allow trades to be executed on the close of a bar,
+/// rather than the next day.
+///
+/// If `hedging` is true, allow trades in both directions simultaneously.
+/// Otherwise, opposite-facing orders first close existing trades in a [FIFO] manner.
+///
+/// Consider: exclusive_orders
 pub struct Broker {
     pub name: String,
     pub initial_cash: f32,
@@ -33,18 +45,6 @@ pub struct Broker {
     pub positions: HashMap<Symbol, Position>, // Keeps track of all the active positions
 }
 
-/// The main entity that a strategy interacts with throughout the core event loop.
-/// The Broker is responsible for maintaining bookkeeping of all active_orders placed,
-/// providing the strategy with information about the current state of the market,
-/// and managing the strategy's portfolio.
-///
-/// If `trade_on_close` is `True`, allow trades to be executed on the close of a bar,
-/// rather than the next day.
-///
-/// If `hedging` is true, allow trades in both directions simultaneously.
-/// Otherwise, opposite-facing orders first close existing trades in a [FIFO] manner.
-///
-/// Consider: exclusive_orders
 impl Broker {
     pub fn new(
         name: &str,
@@ -213,5 +213,4 @@ impl Broker {
 
         Ok(())
     }
-    // pub fn place_order(&mut self, order: Order) -> Result<(), BrokerError>;
 }

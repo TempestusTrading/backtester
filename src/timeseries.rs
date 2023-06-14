@@ -3,12 +3,12 @@ use std::fs::File;
 use std::path::Path;
 
 /// Provides a stream of 'Tickers' from a CSV file.
-/// # Note
-/// This struct is lazily evaluated. Rather than loading the whole
+/// ## Notice:
+/// The timeseries is lazily evaluated. Rather than loading the whole
 /// file into memory upon initialization, it creates a deserialized
 /// reader that can be turned into an iterator to load the data.
 /// # Example
-/// ```no_run
+/// ```
 /// use backtester::dataframe::timeseries::*;
 /// let timeseries = TimeSeries::from_csv("data/SPY.csv");
 /// for ticker in timeseries {

@@ -1,7 +1,6 @@
 use super::{Indicator, IndicatorError, IndicatorResult, Ticker};
 
-/// Simple Moving Average
-/// [https://www.investopedia.com/terms/s/sma.asp]
+/// # [Simple Moving Average] (https://www.investopedia.com/terms/s/sma.asp)
 pub struct SMA {
     period: u32,
     ticks: Vec<f32>,
@@ -55,7 +54,7 @@ impl Indicator for SMA {
 
     fn at(&self, index: usize) -> IndicatorResult<Self::Result> {
         if index < self.values.len() {
-            return Ok(*self.values.get(index).unwrap())
+            return Ok(*self.values.get(index).unwrap());
         }
         Err(IndicatorError::IndexOutOfRange)
     }

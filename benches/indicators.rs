@@ -1,8 +1,5 @@
+use backtester::{indicators::*, timeseries::TimeSeries};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use backtester::{
-    indicators::*,
-    timeseries::TimeSeries,
-};
 
 use std::fs;
 

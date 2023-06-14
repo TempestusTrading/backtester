@@ -1,11 +1,10 @@
-use super::{Indicator, IndicatorResult, IndicatorError, Ticker};
+use super::{Indicator, IndicatorError, IndicatorResult, Ticker};
 
-/// # Relative Strength Index
-/// https://www.investopedia.com/terms/r/rsi.asp
-/// Measures the sspeed of a security's recent price changes
-/// An RSI reading of 30 or below indicators overbought
-/// while a reading of 30 or below indicates an oversold
-/// condition.
+/// [Relative Strength Index](https://www.investopedia.com/terms/r/rsi.asp)
+/// 
+/// Measures the speed of a security's recent price changes.
+/// An RSI reading of 30 or below indicates overbought market conditions,
+/// while a reading of 30 or below indicates an oversold condition.
 pub struct RSI {
     period: u32,
     smooth: bool,
@@ -23,6 +22,7 @@ impl Default for RSI {
 }
 
 impl RSI {
+    /// Default period of `14` tickers, smoothing is `true`.
     pub fn new(period: u32, smooth: bool) -> Self {
         Self {
             period,
@@ -65,8 +65,11 @@ impl Indicator for RSI {
         if self.smooth {
             let step_two = 100.0
                 - (100.0
-                    / (1.0 + ((self.previous_average_gain * (self.period - 1) as f32 + current_gain)
-                        / (self.previous_average_loss * (self.period - 1) as f32 + current_loss))));
+                    / (1.0
+                        + ((self.previous_average_gain * (self.period - 1) as f32
+                            + current_gain)
+                            / (self.previous_average_loss * (self.period - 1) as f32
+                                + current_loss))));
             self.values.push(step_two);
         } else {
             self.values.push(step_one);
@@ -79,7 +82,7 @@ impl Indicator for RSI {
 
     fn get_value(&self) -> IndicatorResult<Self::Result> {
         match !self.values.is_empty() {
-            true => Ok(*self.values.last().unwrap()), 
+            true => Ok(*self.values.last().unwrap()),
             false => Err(IndicatorError::InsufficientData),
         }
     }
