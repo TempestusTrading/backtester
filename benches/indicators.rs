@@ -1,7 +1,8 @@
-use backtester::{
-    dataframe::timeseries::TimeSeries, indicators::indicator::Indicator, indicators::*,
-};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use backtester::{
+    indicators::*,
+    timeseries::TimeSeries,
+};
 
 use std::fs;
 
@@ -20,9 +21,9 @@ pub fn sma(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(filename), &entry, |b, entry| {
             b.iter(|| {
                 let timeseries = TimeSeries::from_csv(entry);
-                let mut sma = sma::MovingAverage::new(20);
+                let mut sma = sma::SMA::new(20);
                 for ticker in timeseries {
-                    sma.update(&ticker.unwrap());
+                    sma.update(&ticker.unwrap()).expect("Failed to update sma");
                 }
             })
         });

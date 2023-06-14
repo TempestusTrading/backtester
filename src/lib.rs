@@ -14,9 +14,9 @@
 //! ## Features
 //! 
 
-mod broker;
-mod bt;
-mod indicators;
-mod strategy;
-mod timeseries;
-mod types;
+pub mod broker;
+pub mod bt;
+pub mod indicators;
+pub mod strategy;
+pub mod timeseries;
+pub mod types;

@@ -1,9 +1,9 @@
-pub mod rsi;
-pub mod sma;
+use serde_derive::{Deserialize, Serialize};
 
 pub use crate::types::Ticker;
 
 /// Represents the possible errors that can occur when computing an indicator.
+#[derive(Debug, Serialize, Deserialize)]
 pub enum IndicatorError {
     IndexOutOfRange,
     InsufficientData,
@@ -21,3 +21,7 @@ pub trait Indicator: Default {
     /// Randomly access a past value in the indicator's internal data structure.
     fn at(&self, index: usize) -> IndicatorResult<Self::Result>;
 }
+
+// Re-export all indicators.
+pub mod rsi;
+pub mod sma;
