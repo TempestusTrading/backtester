@@ -1,11 +1,9 @@
+use super::*;
+use crate::{
+    indicators::sma::SMA,
+    types::{Order, OrderSide, OrderType, Ticker},
+};
 use std::collections::HashMap;
-
-use crate::core::broker::Broker;
-use crate::core::order::{Order, OrderSide, OrderType};
-use crate::dataframe::ticker::Ticker;
-use crate::indicators::indicator::Indicator;
-use crate::indicators::moving_average::MovingAverage;
-use crate::strategy::strategy::{Strategy, StrategyBuilder};
 
 pub struct SMACrossoverStrategy {
     order_id: usize,
@@ -17,7 +15,7 @@ pub struct SMACrossoverStrategy {
 impl SMACrossoverStrategy {
     pub fn new(period: u32) -> SMACrossoverStrategy {
         StrategyBuilder::new()
-            .add_indicator("sma", Box::new(MovingAverage::new(period)))
+            .add_indicator("sma", Box::new(SMA::new(period)))
             .build()
     }
 }

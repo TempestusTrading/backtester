@@ -1,43 +1,19 @@
-use std::collections::HashMap;
+use crate::types::*;
+
+use serde_derive::{Deserialize, Serialize};
 
 use log::{info, warn};
-use std::error::Error;
+use std::collections::HashMap;
 use std::fmt;
-
-use crate::core::order::*;
-use crate::dataframe::ticker::Ticker;
-use crate::strategy::strategy::Strategy;
 
 type Symbol = String;
 
-#[derive(Debug, Clone)]
-pub struct Position {
-    symbol: String,
-    amount: f32,
-    price: f32,
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BrokerError {
     InsufficientFunds,
     InsufficientMargin,
     InvalidOrder,
 }
-
-/// Good reference for writing custom error types.
-/// https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/book/first-edition/error-handling.html
-impl fmt::Display for BrokerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            BrokerError::InsufficientFunds => write!(f, "Insufficient funds"),
-            BrokerError::InsufficientMargin => write!(f, "Insufficient margin"),
-            BrokerError::InvalidOrder => write!(f, "Invalid order"),
-        };
-        Ok(())
-    }
-}
-
-impl Error for BrokerError {}
 
 pub struct Broker {
     pub name: String,
@@ -75,8 +51,8 @@ impl Broker {
         margin: f32,
         trade_on_close: bool,
         hedging: bool,
-    ) -> Broker {
-        Broker {
+    ) -> Self {
+        Self {
             name: name.to_string(),
             initial_cash,
             commission,
@@ -224,6 +200,9 @@ impl Broker {
                 }
                 OrderType::MarketOnOpen => {
                     todo!("Implement logic to determine if the market is opening");
+                }
+                _ => {
+                    todo!("Implement the rest of the order types");
                 }
             }
         }

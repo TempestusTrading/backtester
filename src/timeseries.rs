@@ -1,9 +1,6 @@
+use crate::types::Ticker;
 use std::fs::File;
 use std::path::Path;
-
-use csv;
-
-use super::ticker::Ticker;
 
 /// Provides a stream of 'Tickers' from a CSV file.
 /// # Note

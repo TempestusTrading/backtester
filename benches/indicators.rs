@@ -20,7 +20,7 @@ pub fn sma(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(filename), &entry, |b, entry| {
             b.iter(|| {
                 let timeseries = TimeSeries::from_csv(entry);
-                let mut sma = moving_average::MovingAverage::new(20);
+                let mut sma = sma::MovingAverage::new(20);
                 for ticker in timeseries {
                     sma.update(&ticker.unwrap());
                 }
