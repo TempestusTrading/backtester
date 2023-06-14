@@ -7,8 +7,13 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.23"
+criterion = "0.5.1"
 csv = "1.2.2"
 env_logger = "0.10.0"
 log = { version = "0.4", features = ["std", "serde"] }
 serde = { version = "1.0.163", features = ["serde_derive"] }
 serde_derive = "1.0.163"
+
+[[bench]]
+name = "indicators"
+harness = false
