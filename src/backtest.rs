@@ -22,6 +22,13 @@ impl BacktestBuilder {
         self
     }
 
+    pub fn add_feeds(mut self, feeds: Vec<TimeSeries>) -> Self {
+        for feed in feeds {
+            self.feeds.push(feed);
+        }
+        self
+    }
+
     pub fn add_broker(mut self, broker: Broker) -> Self {
         self.brokers.push(broker);
         self
