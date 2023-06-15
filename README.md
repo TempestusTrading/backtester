@@ -37,10 +37,8 @@ Provides a simple interface for backtesting strategies.
 use backtester::prelude::*;
 use backtester::strategy::SMACrossover;
 
-pub struct DumbStrategy;
-
-fn main() {
-	let aapl_timeseries = TimeSeries::from_csv("./datasets/AAPL.csv");
+fn main() -> Result<(), BacktestError> {
+	let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAPL_1Y.csv");
 	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false);
 	let strategy = Box::new(SMACrossover::default());
 	let backtest = BacktestBuilder::new()
@@ -50,9 +48,11 @@ fn main() {
 	               .build();
 
 	for test in backtest {
-		let results = test.run();
-		println!("{:?}", results);
+		let results = test.run()?;
+		println!("{}", results);
 	}
+
+    Ok(())
 }
 ```
 
@@ -62,31 +62,38 @@ One can easily define a custom indicator by deriving the `Indicator` trait.
 
 ```rust
 use backtester::prelude::*;
+use std::fmt;
 
 #[derive(Clone)]
 pub struct MyIndicator {
    value: Option<f32>,
 }
 
+impl fmt::Display for MyIndicator {
+   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+      write!(f, "My Indicator")
+   }
+}
+
 impl Indicator for MyIndicator {
-	 type Result = f32;
+    type Result = f32;
 
-	 fn update(&mut self, ticker: &Ticker) -> IndicatorResult<()> {
-			self.value = Some(ticker.close);
+	    fn update(&mut self, ticker: &Ticker) -> IndicatorResult<()> {
+	        self.value = Some(ticker.close);
 			Ok(())
-	 }
+	    }
 
-	 fn get_value(&self) -> IndicatorResult<Self::Result> {
+	    fn get_value(&self) -> IndicatorResult<Self::Result> {
 			if let Some(result) = self.value {
-				 Ok(result)
+			    Ok(result)
 			} else {
-				 Err(IndicatorError::InsufficientData)
+			    Err(IndicatorError::InsufficientData)
 			}
-	 }
+	    }
 
-	 fn at(&self, index: usize) -> IndicatorResult<Self::Result> {
+	    fn at(&self, index: usize) -> IndicatorResult<Self::Result> {
 			self.get_value()
-	 }
+	    }
 }
 ```
 
@@ -99,9 +106,16 @@ and add the logic for the `on_ticker` method, which will be executed by the
 
 ```rust
 use backtester::prelude::*;
+use std::fmt;
 
 #[derive(Clone)]
 pub struct DumbStrategy;
+
+impl fmt::Display for DumbStrategy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+       write!(f, "Dumb Strategy")
+   }
+}
 
 impl Strategy for DumbStrategy {
    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
@@ -114,7 +128,7 @@ impl Strategy for DumbStrategy {
                time: ticker.datetime.clone(),
         })?;
       }
-			Ok(())
+	  Ok(())
    }
 }
 ```
