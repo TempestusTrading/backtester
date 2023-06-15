@@ -25,16 +25,16 @@
 //! Determines the optimal parameters for a given strategy.
 //! 6. Flexibility
 //! Returns a set of results that can be easily analyzed and visualized.
-//! 
+//!
 //! ## Overview
-//! 
+//!
 //! ### Backtesting Strategies
 //! Provides a simple interface for backtesting strategies.
-//! 
+//!
 //! ```
 //! use backtester::prelude::*;
 //! use backtester::strategy::SMACrossover;
-//! 
+//!
 //! let aapl_timeseries = TimeSeries::from_csv("./datasets/AAPL.csv");
 //! let broker = Broker::new(100_000.0);
 //! let strategy = Box::new(SMACrossover::new());
@@ -43,33 +43,32 @@
 //!                .add_broker(broker)
 //!                .add_strategy(strategy)
 //!                .build();
-//! 
+//!
 //! let results = backtest.run();
 //! ```
-//! 
+//!
 //! ### Defining Custom Indicators
 //! One can easily define a custom indicator by deriving the `Indicator` trait.
-//! 
+//!
 //! ```
 //! use backtester::indicator::*;
-//! 
+//!
 //! pub struct MyIndicator {
 //!    value: f64,
 //! }
-//! 
+//!
 //! impl Indicator for MyIndicator {
 //!    fn new() -> Self {
 //!       Self { value: 0.0 }
 //!   }
-//! ``` 
-//! 
+//! ```
+//!
 
 /// Implements the broker
 mod broker;
 
 pub mod prelude {
     pub use crate::broker::*;
-
 }
 
 pub mod backtest;
@@ -86,4 +85,3 @@ pub use timeseries::*;
 
 pub mod types;
 pub use types::*;
-

@@ -1,18 +1,20 @@
 //! # [Indicators](https://www.investopedia.com/terms/i/indicator.asp)
-//! 
-//! Indicators are statistics used to measure current conditions as well 
-//! forecast financial or economic trends.
-//! 
+//!
+//! *Indicators are statistics used to measure current market conditions as well
+//! forecast financial or economic trends.*
+//!
 //! # [Technical Indicators](https://www.investopedia.com/terms/t/technicalindicator.asp)
+//!
 //! # [Ecnonomic Indicators](https://www.investopedia.com/terms/e/economicindicator.asp)
+//!
 //! # [Sentiment Indicators](https://www.investopedia.com/terms/s/sentimentindicator.asp)
+//!
 //! # [Fundamental Indicators](https://www.investopedia.com/terms/f/fundamentalindicator.asp)
-//! 
+//!
 use serde_derive::{Deserialize, Serialize};
 
 pub use crate::types::Ticker;
 
-/// Represents the possible errors that can occur when computing an indicator.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum IndicatorError {
     IndexOutOfRange,
@@ -33,9 +35,8 @@ pub trait Indicator: Default {
     fn at(&self, index: usize) -> IndicatorResult<Self::Result>;
 }
 
-// Re-export all indicators.
-pub mod rsi;
-pub mod sma;
-
+// Re-export all indicators
+mod rsi;
+mod sma;
 pub use rsi::RSI;
 pub use sma::SMA;

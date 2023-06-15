@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    indicators::sma::SMA,
+    indicators::SMA,
     types::{Order, OrderSide, OrderType, Ticker},
 };
 

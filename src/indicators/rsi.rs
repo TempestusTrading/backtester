@@ -1,7 +1,7 @@
 use super::{Indicator, IndicatorError, IndicatorResult, Ticker};
 
 /// [Relative Strength Index](https://www.investopedia.com/terms/r/rsi.asp)
-/// 
+///
 /// Measures the speed of a security's recent price changes.
 /// An RSI reading of 30 or below indicates overbought market conditions,
 /// while a reading of 30 or below indicates an oversold condition.
@@ -92,5 +92,24 @@ impl Indicator for RSI {
             true => Ok(*self.values.get(index).unwrap()),
             false => Err(IndicatorError::IndexOutOfRange),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn no_tickers_period_5() {
+        let mut rsi = RSI::new(5, true);
+
+        assert!(rsi.get_value().is_err());
+    }
+
+    #[test]
+    fn invalid_index() {
+        let sma = RSI::new(5, true);
+
+        assert!(sma.at(2).is_err());
     }
 }

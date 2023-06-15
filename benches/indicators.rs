@@ -18,7 +18,7 @@ pub fn sma(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(filename), &entry, |b, entry| {
             b.iter(|| {
                 let timeseries = TimeSeries::from_csv(entry);
-                let mut sma = sma::SMA::new(20);
+                let mut sma = SMA::new(20);
                 for ticker in timeseries {
                     sma.update(&ticker.unwrap()).expect("Failed to update sma");
                 }
