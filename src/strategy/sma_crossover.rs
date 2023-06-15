@@ -37,6 +37,12 @@ impl SMACrossover {
     }
 }
 
+impl fmt::Display for SMACrossover {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "SMA Crossover(Period: {})", self.sma_indicator)
+    }
+}
+
 impl Strategy for SMACrossover {
     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
         self.sma_indicator.update(ticker).err();

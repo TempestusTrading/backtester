@@ -1,4 +1,4 @@
-use super::{Indicator, IndicatorError, IndicatorResult, Ticker};
+use super::*;
 use crate::types::DatetimeField;
 
 /// # [Simple Moving Average](https://www.investopedia.com/terms/s/sma.asp)
@@ -25,6 +25,12 @@ impl SMA {
             ticks: Vec::new(),
             values: Vec::new(),
         }
+    }
+}
+
+impl fmt::Display for SMA {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "SMA(Period: {})", self.period)
     }
 }
 

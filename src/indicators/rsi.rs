@@ -1,4 +1,4 @@
-use super::{Indicator, IndicatorError, IndicatorResult, Ticker};
+use super::*;
 
 /// [Relative Strength Index](https://www.investopedia.com/terms/r/rsi.asp)
 ///
@@ -19,6 +19,12 @@ pub struct RSI {
 impl Default for RSI {
     fn default() -> Self {
         Self::new(14, true)
+    }
+}
+
+impl fmt::Display for RSI {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "RSI(Period: {}, Smooth: {})", self.period, self.smooth)
     }
 }
 

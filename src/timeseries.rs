@@ -66,6 +66,10 @@ impl TimeSeries {
         }
         result
     }
+
+    pub fn get_path(&self) -> &PathBuf {
+        &self.path
+    }
 }
 
 impl IntoIterator for TimeSeries {

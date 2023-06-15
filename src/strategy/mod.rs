@@ -12,6 +12,7 @@ use crate::{
     types::{Ticker, Order, OrderType, OrderSide},
 };
 use dyn_clone::DynClone;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum StrategyError {
@@ -28,7 +29,7 @@ impl From<BrokerError> for StrategyError {
 /// Sends orders to a broker based on decisions made from the ticker data.
 /// Contains indicators that are updated with the ticker data and used to make
 /// trading decisions.
-pub trait Strategy: DynClone {
+pub trait Strategy: fmt::Display + DynClone {
     /// Called by the broker for each step in the backtest. The strategy should
     /// use the ticker data to make trading decisions and send orders to the broker.
     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError>;

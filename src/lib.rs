@@ -35,9 +35,7 @@
 //! use backtester::prelude::*;
 //! use backtester::strategy::SMACrossover;
 //!
-//! pub struct DumbStrategy;
-//!
-//! fn main() {
+//! fn main() -> Result<(), BacktestError> {
 //! 	let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAPL_1Y.csv");
 //! 	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false);
 //! 	let strategy = Box::new(SMACrossover::default());
@@ -48,9 +46,11 @@
 //! 	               .build();
 //!
 //! 	for test in backtest {
-//! 		let results = test.run();
-//! 		println!("{:?}", results);
+//! 		let results = test.run()?;
+//! 		println!("{}", results);
 //! 	}
+//! 
+//!     Ok(())
 //! }
 //! ```
 //! 
@@ -60,10 +60,17 @@
 //!
 //! ```
 //! use backtester::prelude::*;
+//! use std::fmt;
 //! 
 //! #[derive(Clone)]
 //! pub struct MyIndicator {
 //!    value: Option<f32>,
+//! }
+//! 
+//! impl fmt::Display for MyIndicator {
+//!    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//!       write!(f, "My Indicator")
+//!    }
 //! }
 //! 
 //! impl Indicator for MyIndicator {
@@ -97,9 +104,16 @@
 //! 
 //! ```
 //! use backtester::prelude::*;
+//! use std::fmt;
 //! 
 //! #[derive(Clone)]
 //! pub struct DumbStrategy;
+//! 
+//! impl fmt::Display for DumbStrategy {
+//!     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//!        write!(f, "Dumb Strategy")
+//!    }
+//! }
 //! 
 //! impl Strategy for DumbStrategy {
 //!    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {

@@ -1,6 +1,7 @@
 use crate::{broker::Broker, strategy::{Strategy, StrategyError}, timeseries::TimeSeries, prelude::BrokerError};
-use serde_derive::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
+use std::fmt;
+use std::ffi::OsString;
 
 pub struct BacktestBuilder {
     feeds: Vec<TimeSeries>,
@@ -95,6 +96,7 @@ impl Backtest {
 
     pub fn run(mut self) -> Result<BacktestResult, BacktestError> {
         let start = Instant::now();
+        let feed_path = self.feed.get_path().as_os_str().into();
 
         for ticker in self.feed {
             let ticker = ticker.expect("Failed to parse ticker.");
@@ -103,18 +105,30 @@ impl Backtest {
         }
 
         Ok(BacktestResult {
+            feed_path: feed_path,
+            broker: self.broker,
+            strategy: self.strategy,
             runtime: start.elapsed(),
-            starting_amount: self.broker.initial_cash,
-            ending_amount: self.broker.current_cash,
         })
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BacktestResult {
+    feed_path: OsString,
+    broker: Broker,
+    strategy: Box<dyn Strategy>,
     runtime: Duration,
-    starting_amount: f32,
-    ending_amount: f32,
+}
+
+impl fmt::Display for BacktestResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut result = String::new();
+        result.push_str(&format!("Feed: {}\n", self.feed_path.to_str().unwrap()));
+        // result.push_str(&format!("Broker: {}\n", self.broker));
+        result.push_str(&format!("Strategy: {}\n", self.strategy));
+        result.push_str(&format!("Runtime: {:?}\n", self.runtime));
+        write!(f, "{}", result)
+    }
 }
 
 #[cfg(test)]

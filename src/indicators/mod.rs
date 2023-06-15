@@ -17,6 +17,8 @@ use crate::{
     types::{Ticker}, 
 };
 
+pub(crate) use std::fmt;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum IndicatorError {
     IndexOutOfRange,
@@ -25,7 +27,7 @@ pub enum IndicatorError {
 
 pub type IndicatorResult<T> = Result<T, IndicatorError>;
 
-pub trait Indicator: DynClone {
+pub trait Indicator: fmt::Display + DynClone {
     /// The type of value that the indicator returns.
     type Result;
 
