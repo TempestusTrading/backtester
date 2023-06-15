@@ -1,3 +1,17 @@
+//! Data streams for backtesting.
+//! 
+//! ## Limitations
+//! Currently, the only supported data source is CSV files.
+//! Furthermore, the CSV file must contain the following columns:
+//! 
+//! - open
+//! - high
+//! - low
+//! - close
+//! - volume
+//! - datetime
+//! 
+//! If any of these columns are omitted, deserialization will fail.
 use crate::types::Ticker;
 use std::fs::File;
 use std::path::Path;

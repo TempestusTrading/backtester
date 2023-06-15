@@ -1,4 +1,4 @@
-//! # [Indicators](https://www.investopedia.com/terms/i/indicator.asp)
+//! Contains the `Indicator` trait and a list of common market [indicators](https://www.investopedia.com/terms/i/indicator.asp).
 //!
 //! *Indicators are statistics used to measure current market conditions as well
 //! forecast financial or economic trends.*
@@ -12,8 +12,7 @@
 //! # [Fundamental Indicators](https://www.investopedia.com/terms/f/fundamentalindicator.asp)
 //!
 use serde_derive::{Deserialize, Serialize};
-
-pub use crate::types::Ticker;
+use crate::types::Ticker;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum IndicatorError {

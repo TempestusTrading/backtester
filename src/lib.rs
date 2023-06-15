@@ -48,6 +48,7 @@
 //! ```
 //!
 //! ### Defining Custom Indicators
+//! 
 //! One can easily define a custom indicator by deriving the `Indicator` trait.
 //!
 //! ```
@@ -60,9 +61,41 @@
 //! impl Indicator for MyIndicator {
 //!    fn new() -> Self {
 //!       Self { value: 0.0 }
-//!   }
+//!    }
+//! }
 //! ```
 //!
+//! ### Creating Custom Strategies
+//! 
+//! Creating custom strategies is just as simple. Simply derive the `Strategy` trait.
+//! and add the logic for the `on_ticker` method, which will be executed by the 
+//! `Broker` for each step in the backtest.
+//! 
+//! 
+//! ```
+//! use trading::{
+//!    broker::Broker;
+//!    strategy::Strategy;
+//!    types::{Order, OrderSide, OrderType, Ticker};
+//! }
+//!
+//! pub struct DumbStrategy;
+//!
+//! impl Strategy for DumbStrategy {
+//!    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
+//!       if ticker.close > 100.0 {
+//!         broker.submit_order(Order {
+//!                symbol: "AAPL".to_string()
+//!                quantity: 100.0,
+//!                side: OrderSide::Buy,
+//!                order_type: OrderType::Market,
+//!                time: ticker.datetime.clone(),
+//!         })
+//!       }   
+//!    }  
+//! }
+//! ```
+//! 
 
 pub mod broker;
 mod backtest;

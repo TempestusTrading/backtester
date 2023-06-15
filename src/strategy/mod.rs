@@ -16,7 +16,7 @@
 //!
 //! impl Strategy for DumbStrategy {
 //!    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
-//!       if ticker.close > 69.0 {
+//!       if ticker.close > 100.0 {
 //!         broker.submit_order(Order {
 //!                symbol: "AAPL".to_string()
 //!                quantity: 100.0,
