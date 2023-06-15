@@ -73,11 +73,7 @@
 //! 
 //! 
 //! ```
-//! use trading::{
-//!    broker::Broker;
-//!    strategy::Strategy;
-//!    types::{Order, OrderSide, OrderType, Ticker};
-//! }
+//! use backtester::prelude::*;
 //!
 //! pub struct DumbStrategy;
 //!

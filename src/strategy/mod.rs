@@ -37,7 +37,13 @@ use crate::{
 
 pub enum StrategyError {
     // The broker experienced an error while processing the strategy's action.
-    BrokerError,
+    BrokerError(BrokerError),
+}
+
+impl From<BrokerError> for StrategyError {
+    fn from(err: BrokerError) -> Self {
+        StrategyError::BrokerError(err)
+    }
 }
 
 /// Sends orders to a broker based on decisions made from the ticker data.
