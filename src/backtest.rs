@@ -1,7 +1,6 @@
 use crate::{broker::Broker, strategy::{Strategy, StrategyError}, timeseries::TimeSeries, prelude::BrokerError};
 use serde_derive::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
-use dyn_clone::DynClone;
 
 pub struct BacktestBuilder {
     feeds: Vec<TimeSeries>,
@@ -109,4 +108,29 @@ pub struct BacktestResult {
     runtime: Duration,
     starting_amount: f32,
     ending_amount: f32,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_csv_read() {
+        let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAPL_1Y.csv");
+
+        for ticker in aapl_timeseries {
+            assert!(ticker.is_ok());
+        }
+    }
+
+    #[test]
+    fn test_dir_read() {
+        let datasets = TimeSeries::from_dir("./benches/datasets");
+
+        for timeseries in datasets {
+            for ticker in timeseries {
+                assert!(ticker.is_ok());
+            }
+        }
+    }
 }

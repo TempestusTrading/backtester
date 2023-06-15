@@ -13,7 +13,7 @@
 //! 
 //! If any of these columns are omitted, deserialization will fail.
 use crate::types::Ticker;
-use std::fs::File;
+use std::fs::{File, read_dir, DirEntry};
 use std::path::{Path, PathBuf};
 
 /// Provides a stream of 'Tickers' from a CSV file.
@@ -44,6 +44,27 @@ impl TimeSeries {
     /// Otherwise, deserialization will fail.
     pub fn from_csv<P: AsRef<Path>>(path: P) -> Self {
         Self { path: path.as_ref().to_path_buf() }
+    }
+
+    /// Initializes a set of TimeSeries from a directory.
+    /// This function uses `from_csv` for each CSV file, so 
+    /// ensure that the format of each CSV file is correct.
+    pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
+        let mut result = Vec::new();
+        if let Ok(entries) = read_dir(path) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    if let Some(extension) = entry.path().extension() {
+                        if extension == "csv" {
+                            result.push(Self::from_csv(entry.path()));
+                        }
+                    }
+                }
+            }
+        } else {
+            panic!("Cannot find directory");
+        }
+        result
     }
 }
 
