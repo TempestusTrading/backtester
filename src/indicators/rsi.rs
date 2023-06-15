@@ -5,6 +5,7 @@ use super::{Indicator, IndicatorError, IndicatorResult, Ticker};
 /// Measures the speed of a security's recent price changes.
 /// An RSI reading of 30 or below indicates overbought market conditions,
 /// while a reading of 30 or below indicates an oversold condition.
+#[derive(Clone)]
 pub struct RSI {
     period: u32,
     smooth: bool,

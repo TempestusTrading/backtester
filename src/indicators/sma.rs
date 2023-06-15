@@ -2,6 +2,7 @@ use super::{Indicator, IndicatorError, IndicatorResult, Ticker};
 use crate::types::DatetimeField;
 
 /// # [Simple Moving Average](https://www.investopedia.com/terms/s/sma.asp)
+#[derive(Clone)]
 pub struct SMA {
     /// Use the last `period` tickers to use in the calculation.
     period: u32,

@@ -31,37 +31,60 @@
 //! ### Backtesting Strategies
 //! Provides a simple interface for backtesting strategies.
 //!
-//! ```
+//! ```no_run
 //! use backtester::prelude::*;
 //! use backtester::strategy::SMACrossover;
 //!
-//! let aapl_timeseries = TimeSeries::from_csv("./datasets/AAPL.csv");
-//! let broker = Broker::new(100_000.0);
-//! let strategy = Box::new(SMACrossover::new());
-//! let backtest = BacktestBuilder::new()
-//!                .add_feed(aapl_timeseries)
-//!                .add_broker(broker)
-//!                .add_strategy(strategy)
-//!                .build();
+//! pub struct DumbStrategy;
 //!
-//! let results = backtest.run();
+//! fn main() {
+//! 	let aapl_timeseries = TimeSeries::from_csv("./datasets/AAPL.csv");
+//! 	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false);
+//! 	let strategy = Box::new(SMACrossover::default());
+//! 	let backtest = BacktestBuilder::new()
+//! 	               .add_feed(aapl_timeseries)
+//! 	               .add_broker(broker)
+//! 	               .add_strategy(strategy)
+//! 	               .build();
+//!
+//! 	for test in backtest {
+//! 		let results = test.run();
+//! 		println!("{:?}", results);
+//! 	}
+//! }
 //! ```
-//!
+//! 
 //! ### Defining Custom Indicators
 //! 
 //! One can easily define a custom indicator by deriving the `Indicator` trait.
 //!
 //! ```
-//! use backtester::indicator::*;
-//!
+//! use backtester::prelude::*;
+//! 
+//! #[derive(Clone)]
 //! pub struct MyIndicator {
-//!    value: f64,
+//!    value: Option<f32>,
 //! }
-//!
+//! 
 //! impl Indicator for MyIndicator {
-//!    fn new() -> Self {
-//!       Self { value: 0.0 }
-//!    }
+//! 	 type Result = f32;
+//! 
+//! 	 fn update(&mut self, ticker: &Ticker) -> IndicatorResult<()> {
+//! 			self.value = Some(ticker.close);
+//! 			Ok(())
+//! 	 }
+//! 
+//! 	 fn get_value(&self) -> IndicatorResult<Self::Result> {
+//! 			if let Some(result) = self.value {
+//! 				 Ok(result)
+//! 			} else {
+//! 				 Err(IndicatorError::InsufficientData)
+//! 			}
+//! 	 }
+//! 
+//! 	 fn at(&self, index: usize) -> IndicatorResult<Self::Result> {
+//! 			self.get_value()
+//! 	 }
 //! }
 //! ```
 //!
@@ -74,33 +97,36 @@
 //! 
 //! ```
 //! use backtester::prelude::*;
-//!
+//! 
+//! #[derive(Clone)]
 //! pub struct DumbStrategy;
-//!
+//! 
 //! impl Strategy for DumbStrategy {
 //!    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
 //!       if ticker.close > 100.0 {
-//!         broker.submit_order(Order {
-//!                symbol: "AAPL".to_string()
+//!         broker.submit_order(1, Order {
+//!                symbol: "AAPL".to_string(),
 //!                quantity: 100.0,
 //!                side: OrderSide::Buy,
 //!                order_type: OrderType::Market,
 //!                time: ticker.datetime.clone(),
-//!         })
+//!         })?;
 //!       }   
+//! 			Ok(())
 //!    }  
 //! }
 //! ```
 //! 
 
-pub mod broker;
 mod backtest;
+pub mod broker;
 pub mod indicators;
 pub mod strategy;
 pub mod timeseries;
 mod types;
 
 pub mod prelude {
+    pub use crate::backtest::*;
     pub use crate::broker::*;
     pub use crate::indicators::*;
     pub use crate::strategy::*;

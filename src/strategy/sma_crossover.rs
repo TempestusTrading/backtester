@@ -6,21 +6,29 @@ use crate::{
 /// # SMA Crossover Strategy
 ///
 /// ## States
+/// 
 /// - `Waiting` - Waiting for the SMA value to be calculated.
 /// - `No Position` - No position is established because either (1) the SMA was just calculated
 /// and the value has yet to cross the ticker close, executing a market buy order, or (2) the SMA
 /// crossed below the ticker price, executing a market sell order.
 /// - `Long` - The SMA has crossed about the ticker price, so we execute a market buy order
-pub struct SMACrossoverStrategy {
+#[derive(Clone)]
+pub struct SMACrossover {
     order_id: usize,
     previous_sma: f32,
     previous_ticker: Option<Ticker>,
     sma_indicator: SMA,
 }
 
-impl SMACrossoverStrategy {
-    pub fn new(period: u32) -> SMACrossoverStrategy {
-        SMACrossoverStrategy {
+impl Default for SMACrossover {
+    fn default() -> Self {
+        Self::new(10)
+    }
+}
+
+impl SMACrossover {
+    pub fn new(period: u32) -> Self {
+        Self {
             order_id: 0,
             previous_sma: 0.0,
             previous_ticker: None,
@@ -29,7 +37,7 @@ impl SMACrossoverStrategy {
     }
 }
 
-impl Strategy for SMACrossoverStrategy {
+impl Strategy for SMACrossover {
     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
         self.sma_indicator.update(ticker).err();
 
@@ -74,4 +82,6 @@ impl Strategy for SMACrossoverStrategy {
 
         Ok(())
     }
+
+    
 }

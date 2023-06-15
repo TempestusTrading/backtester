@@ -3,7 +3,7 @@ use crate::types::*;
 
 use serde_derive::{Deserialize, Serialize};
 
-use log::{info, warn};
+use log::{info};
 use std::collections::HashMap;
 use std::fmt;
 
@@ -29,6 +29,7 @@ pub type BrokerResult<T> = Result<T, BrokerError>;
 /// Otherwise, opposite-facing orders first close existing trades in a [FIFO] manner.
 ///
 /// Consider: exclusive_orders
+#[derive(Clone)]
 pub struct Broker {
     pub name: String,
     pub initial_cash: f32,

@@ -12,7 +12,10 @@
 //! # [Fundamental Indicators](https://www.investopedia.com/terms/f/fundamentalindicator.asp)
 //!
 use serde_derive::{Deserialize, Serialize};
-use crate::types::Ticker;
+use dyn_clone::DynClone;
+use crate::{
+    types::{Ticker}, 
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum IndicatorError {
@@ -22,7 +25,7 @@ pub enum IndicatorError {
 
 pub type IndicatorResult<T> = Result<T, IndicatorError>;
 
-pub trait Indicator: Default {
+pub trait Indicator: DynClone {
     /// The type of value that the indicator returns.
     type Result;
 
