@@ -1,3 +1,4 @@
+//! The main entity that a strategy interacts with throughout the core event loop.
 use crate::types::*;
 
 use serde_derive::{Deserialize, Serialize};
@@ -17,7 +18,6 @@ pub enum BrokerError {
 
 pub type BrokerResult<T> = Result<T, BrokerError>;
 
-/// The main entity that a strategy interacts with throughout the core event loop.
 /// The Broker is responsible for maintaining bookkeeping of all `active_orders` placed,
 /// providing the strategy with information about the current state of the market,
 /// and managing the strategy's portfolio.

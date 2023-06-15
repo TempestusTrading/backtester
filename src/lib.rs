@@ -64,24 +64,17 @@
 //! ```
 //!
 
-/// Implements the broker
-mod broker;
+pub mod broker;
+mod backtest;
+pub mod indicators;
+pub mod strategy;
+pub mod timeseries;
+mod types;
 
 pub mod prelude {
     pub use crate::broker::*;
+    pub use crate::indicators::*;
+    pub use crate::strategy::*;
+    pub use crate::timeseries::*;
+    pub use crate::types::*;
 }
-
-pub mod backtest;
-pub use backtest::*;
-
-pub mod indicators;
-pub use indicators::*;
-
-pub mod strategy;
-pub use strategy::*;
-
-pub mod timeseries;
-pub use timeseries::*;
-
-pub mod types;
-pub use types::*;
