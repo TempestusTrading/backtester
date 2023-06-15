@@ -1,4 +1,4 @@
-use crate::{broker::Broker, strategy::Strategy, timeseries::TimeSeries};
+use crate::{broker::Broker, strategy::{Strategy, StrategyError}, timeseries::TimeSeries, prelude::BrokerError};
 use serde_derive::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 use dyn_clone::DynClone;
@@ -59,6 +59,25 @@ pub struct Backtest {
     strategy: Box<dyn Strategy>,
 }
 
+#[derive(Debug)]
+pub enum BacktestError {
+    TickerParseError,
+    BrokerError(BrokerError),
+    StrategyError(StrategyError),
+}
+
+impl From<StrategyError> for BacktestError {
+    fn from(err: StrategyError) -> Self {
+        BacktestError::StrategyError(err)
+    }
+}
+
+impl From<BrokerError> for BacktestError {
+    fn from(err: BrokerError) -> Self {
+        BacktestError::BrokerError(err)
+    }
+}
+
 impl Backtest {
     pub fn new(feed: TimeSeries, broker: Broker, strategy: Box<dyn Strategy>) -> Self {
         Self {
@@ -68,27 +87,25 @@ impl Backtest {
         }
     }
 
-    pub fn run(mut self) -> BacktestResults {
+    pub fn run(mut self) -> Result<BacktestResult, BacktestError> {
         let start = Instant::now();
 
         for ticker in self.feed {
             let ticker = ticker.expect("Failed to parse ticker.");
-            self.broker
-                .next(&ticker)
-                .expect_err("Broker experienced an error.");
-            self.strategy.on_ticker(&ticker, &mut self.broker);
+            self.broker.next(&ticker)?;
+            self.strategy.on_ticker(&ticker, &mut self.broker)?;
         }
 
-        BacktestResults {
+        Ok(BacktestResult {
             runtime: start.elapsed(),
             starting_amount: self.broker.initial_cash,
             ending_amount: self.broker.current_cash,
-        }
+        })
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BacktestResults {
+pub struct BacktestResult {
     runtime: Duration,
     starting_amount: f32,
     ending_amount: f32,

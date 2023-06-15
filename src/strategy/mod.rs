@@ -13,6 +13,7 @@ use crate::{
 };
 use dyn_clone::DynClone;
 
+#[derive(Debug)]
 pub enum StrategyError {
     // The broker experienced an error while processing the strategy's action.
     BrokerError(BrokerError),

@@ -31,14 +31,14 @@
 //! ### Backtesting Strategies
 //! Provides a simple interface for backtesting strategies.
 //!
-//! ```no_run
+//! ```
 //! use backtester::prelude::*;
 //! use backtester::strategy::SMACrossover;
 //!
 //! pub struct DumbStrategy;
 //!
 //! fn main() {
-//! 	let aapl_timeseries = TimeSeries::from_csv("./datasets/AAPL.csv");
+//! 	let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAPL_1Y.csv");
 //! 	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false);
 //! 	let strategy = Box::new(SMACrossover::default());
 //! 	let backtest = BacktestBuilder::new()
@@ -67,24 +67,24 @@
 //! }
 //! 
 //! impl Indicator for MyIndicator {
-//! 	 type Result = f32;
+//!     type Result = f32;
 //! 
-//! 	 fn update(&mut self, ticker: &Ticker) -> IndicatorResult<()> {
-//! 			self.value = Some(ticker.close);
-//! 			Ok(())
-//! 	 }
-//! 
-//! 	 fn get_value(&self) -> IndicatorResult<Self::Result> {
-//! 			if let Some(result) = self.value {
-//! 				 Ok(result)
-//! 			} else {
-//! 				 Err(IndicatorError::InsufficientData)
-//! 			}
-//! 	 }
-//! 
-//! 	 fn at(&self, index: usize) -> IndicatorResult<Self::Result> {
-//! 			self.get_value()
-//! 	 }
+//!	    fn update(&mut self, ticker: &Ticker) -> IndicatorResult<()> {
+//!	        self.value = Some(ticker.close);
+//!			Ok(())
+//!	    }
+//!
+//!	    fn get_value(&self) -> IndicatorResult<Self::Result> {
+//!			if let Some(result) = self.value {
+//!			    Ok(result)
+//!			} else {
+//!			    Err(IndicatorError::InsufficientData)
+//!			}
+//!	    }
+//!
+//!	    fn at(&self, index: usize) -> IndicatorResult<Self::Result> {
+//!			self.get_value()
+//!	    }
 //! }
 //! ```
 //!
@@ -112,7 +112,7 @@
 //!                time: ticker.datetime.clone(),
 //!         })?;
 //!       }   
-//! 			Ok(())
+//! 	  Ok(())
 //!    }  
 //! }
 //! ```
