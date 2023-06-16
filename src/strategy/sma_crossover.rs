@@ -1,12 +1,10 @@
 use super::*;
-use crate::{
-    indicators::SMA,
-};
+use crate::indicators::SMA;
 
 /// # SMA Crossover Strategy
 ///
 /// ## States
-/// 
+///
 /// - `Waiting` - Waiting for the SMA value to be calculated.
 /// - `No Position` - No position is established because either (1) the SMA was just calculated
 /// and the value has yet to cross the ticker close, executing a market buy order, or (2) the SMA
@@ -67,18 +65,16 @@ impl Strategy for SMACrossover {
             } else if sma < ticker.close
                 && self.previous_sma > self.previous_ticker.as_ref().unwrap().close
             {
-                broker
-                    .submit_order(
-                        self.order_id,
-                        Order {
-                            symbol: "AAPL".to_string(),
-                            quantity: 100.0,
-                            side: OrderSide::Sell,
-                            order_type: OrderType::Market,
-                            time: ticker.datetime.clone(),
-                        },
-                    )
-                    .err();
+                broker.submit_order(
+                    self.order_id,
+                    Order {
+                        symbol: "AAPL".to_string(),
+                        quantity: 100.0,
+                        side: OrderSide::Sell,
+                        order_type: OrderType::Market,
+                        time: ticker.datetime.clone(),
+                    },
+                )?;
                 self.order_id += 1;
             }
 
@@ -88,6 +84,4 @@ impl Strategy for SMACrossover {
 
         Ok(())
     }
-
-    
 }

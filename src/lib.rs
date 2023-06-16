@@ -49,33 +49,33 @@
 //! 		let results = test.run()?;
 //! 		println!("{}", results);
 //! 	}
-//! 
+//!
 //!     Ok(())
 //! }
 //! ```
-//! 
+//!
 //! ### Defining Custom Indicators
-//! 
+//!
 //! One can easily define a custom indicator by deriving the `Indicator` trait.
 //!
 //! ```
 //! use backtester::prelude::*;
 //! use std::fmt;
-//! 
+//!
 //! #[derive(Clone)]
 //! pub struct MyIndicator {
 //!    value: Option<f32>,
 //! }
-//! 
+//!
 //! impl fmt::Display for MyIndicator {
 //!    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 //!       write!(f, "My Indicator")
 //!    }
 //! }
-//! 
+//!
 //! impl Indicator for MyIndicator {
 //!     type Result = f32;
-//! 
+//!
 //!	    fn update(&mut self, ticker: &Ticker) -> IndicatorResult<()> {
 //!	        self.value = Some(ticker.close);
 //!			Ok(())
@@ -96,25 +96,25 @@
 //! ```
 //!
 //! ### Creating Custom Strategies
-//! 
+//!
 //! Creating custom strategies is just as simple. Simply derive the `Strategy` trait.
-//! and add the logic for the `on_ticker` method, which will be executed by the 
+//! and add the logic for the `on_ticker` method, which will be executed by the
 //! `Broker` for each step in the backtest.
-//! 
-//! 
+//!
+//!
 //! ```
 //! use backtester::prelude::*;
 //! use std::fmt;
-//! 
+//!
 //! #[derive(Clone)]
 //! pub struct DumbStrategy;
-//! 
+//!
 //! impl fmt::Display for DumbStrategy {
 //!     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 //!        write!(f, "Dumb Strategy")
 //!    }
 //! }
-//! 
+//!
 //! impl Strategy for DumbStrategy {
 //!    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
 //!       if ticker.close > 100.0 {
@@ -130,7 +130,7 @@
 //!    }  
 //! }
 //! ```
-//! 
+//!
 
 mod backtest;
 pub mod broker;

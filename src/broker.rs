@@ -3,7 +3,7 @@ use crate::types::*;
 
 use serde_derive::{Deserialize, Serialize};
 
-use log::{info};
+use log::info;
 use std::collections::HashMap;
 use std::fmt;
 

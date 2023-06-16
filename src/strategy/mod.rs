@@ -9,7 +9,7 @@
 use crate::{
     broker::{Broker, BrokerError},
     indicators::Indicator,
-    types::{Ticker, Order, OrderType, OrderSide},
+    types::{Order, OrderSide, OrderType, Ticker},
 };
 use dyn_clone::DynClone;
 use std::fmt;
@@ -35,5 +35,7 @@ pub trait Strategy: fmt::Display + DynClone {
     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError>;
 }
 
+mod buy_and_hold;
 mod sma_crossover;
+pub use buy_and_hold::BuyAndHold;
 pub use sma_crossover::SMACrossover;

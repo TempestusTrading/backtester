@@ -1,7 +1,12 @@
-use crate::{broker::Broker, strategy::{Strategy, StrategyError}, timeseries::TimeSeries, prelude::BrokerError};
-use std::time::{Duration, Instant};
-use std::fmt;
+use crate::{
+    broker::Broker,
+    prelude::BrokerError,
+    strategy::{Strategy, StrategyError},
+    timeseries::TimeSeries,
+};
 use std::ffi::OsString;
+use std::fmt;
+use std::time::{Duration, Instant};
 
 pub struct BacktestBuilder {
     feeds: Vec<TimeSeries>,
@@ -17,7 +22,7 @@ impl BacktestBuilder {
             strategies: Vec::new(),
         }
     }
-    
+
     pub fn add_feed(mut self, feed: TimeSeries) -> Self {
         self.feeds.push(feed);
         self
