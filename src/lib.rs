@@ -37,7 +37,7 @@
 //!
 //! fn main() -> Result<(), BacktestError> {
 //! 	let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAPL_1Y.csv");
-//! 	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false);
+//! 	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false, false, false);
 //! 	let strategy = Box::new(SMACrossover::default());
 //! 	let backtest = BacktestBuilder::new()
 //! 	               .add_feed(aapl_timeseries)
@@ -52,6 +52,8 @@
 //!
 //!     Ok(())
 //! }
+//! 
+//! 
 //! ```
 //!
 //! ### Defining Custom Indicators
@@ -124,6 +126,9 @@
 //!                side: OrderSide::Buy,
 //!                order_type: OrderType::Market,
 //!                time: ticker.datetime.clone(),
+//!                execution: OrderExecutionStrategy::GTC,
+//!                on_execute: None,
+//!                on_cancel: None,
 //!         })?;
 //!       }   
 //! 	  Ok(())

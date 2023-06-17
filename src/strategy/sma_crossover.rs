@@ -58,6 +58,9 @@ impl Strategy for SMACrossover {
                             side: OrderSide::Buy,
                             order_type: OrderType::Market,
                             time: ticker.datetime.clone(),
+                            execution: OrderExecutionStrategy::GTC,
+                            on_execute: None,
+                            on_cancel: None,
                         },
                     )
                     .err();
@@ -73,6 +76,9 @@ impl Strategy for SMACrossover {
                         side: OrderSide::Sell,
                         order_type: OrderType::Market,
                         time: ticker.datetime.clone(),
+                        execution: OrderExecutionStrategy::GTC,
+                        on_execute: None,
+                        on_cancel: None,
                     },
                 )?;
                 self.order_id += 1;

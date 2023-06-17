@@ -9,7 +9,7 @@
 use crate::{
     broker::{Broker, BrokerError},
     indicators::Indicator,
-    types::{Order, OrderSide, OrderType, Ticker},
+    types::{Order, OrderExecutionStrategy, OrderSide, OrderType, Ticker},
 };
 use dyn_clone::DynClone;
 use std::fmt;

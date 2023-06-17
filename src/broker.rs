@@ -11,9 +11,10 @@ type Symbol = String;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BrokerError {
-    InsufficientFunds,
+    InsufficientFundsForPurchase,
+    OutOfMoneyError,
     InsufficientMargin,
-    InvalidOrder,
+    OrderIdNotFound,
 }
 
 pub type BrokerResult<T> = Result<T, BrokerError>;
@@ -27,26 +28,46 @@ pub type BrokerResult<T> = Result<T, BrokerError>;
 ///
 /// If `hedging` is true, allow trades in both directions simultaneously.
 /// Otherwise, opposite-facing orders first close existing trades in a [FIFO] manner.
-///
-/// Consider: exclusive_orders
 #[derive(Clone)]
 pub struct Broker {
-    pub name: String,
-    pub initial_cash: f32,
-    pub commission: f32,
-    pub margin: f32,
-    pub trade_on_close: bool,
-    pub hedging: bool,
+    name: String,
+    initial_cash: f32,
+    commission: f32,
+    leverage: f32,
+    trade_on_close: bool,
+    hedging: bool,
+    exclusive_orders: bool,
+    logging: bool,
+    datetime: DatetimeField,
 
-    /// Internal bookkeeping of all active_orders placed.
-    pub active_orders: HashMap<OrderId, Order>,
-    pub canceled_orders: HashMap<OrderId, Order>, // Keeps track of all the orders that were cancelled.
-    pub trades: HashMap<OrderId, Order>, // Keeps track of all the trades that were executed (orders that were filled)
-    pub current_cash: f32,
-    pub positions: HashMap<Symbol, Position>, // Keeps track of all the active positions
+    /// Internal bookkeeping
+    active_orders: HashMap<OrderId, Order>,
+    canceled_orders: HashMap<OrderId, Order>, // Keeps track of all the orders that were cancelled.
+    trades: HashMap<OrderId, Order>, // Keeps track of all the trades that were executed (orders that were filled)
+    current_cash: f32,
+    positions: HashMap<Symbol, Position>, // Keeps track of all the active positions
+}
+
+impl fmt::Display for Broker {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Broker: {}\nCurrent Cash:{}\nPositions:{:?}\n",
+            self.name, self.current_cash, self.positions
+        )
+    }
 }
 
 impl Broker {
+    /// Creates a new Broker instance.
+    /// - `name` - Useful for identifying the broker within a Backtest.
+    /// - `initial_cash` - The amount of cash to start with.
+    /// - `commission` - The percentage of cash to be paid as commission for each trade. This value should be in [-0.1, 0.1].
+    /// - [`margin`](https://www.interactivebrokers.com/en/trading/margin.php) - The percentage of cash to be used as margin for each trade. This value should be in [0, 1].
+    /// - `trade_on_close` - If `True`, allow trades to be executed on the close of a bar, rather than the next day.
+    /// - [`hedging`](https://www.investopedia.com/terms/h/hedge.asp) - If `true`, allow trades in both directions simultaneously. If `false`, opposite-facing orders first close existing trades in a [FIFO] manner.
+    /// - `exclusive_orders` - If `true`, only one order can be active at a time. Thus, if other orders are active, the older orders will be canceled in place of the new one.
+    /// - `logging` - If `true`, log all the broker's activity. Useful for debugging.
     pub fn new(
         name: &str,
         initial_cash: f32,
@@ -54,14 +75,31 @@ impl Broker {
         margin: f32,
         trade_on_close: bool,
         hedging: bool,
+        exclusive_orders: bool,
+        logging: bool,
     ) -> Self {
+        if initial_cash < 0.0 {
+            panic!("Broker: {} initial_cash should be positive.", name);
+        }
+
+        if commission > 0.1 || commission < -0.1 {
+            panic!("Broker: {} commission should between -10% (market-maker's rebates) and 10% (fees).", name);
+        }
+
+        if margin < 0.0 || margin > 1.0 {
+            panic!("Broker: {} margin should be between 0 and 1.", name);
+        }
+
         Self {
             name: name.to_string(),
             initial_cash,
             commission,
-            margin,
+            leverage: 1.0 / margin,
             trade_on_close,
             hedging,
+            exclusive_orders,
+            logging,
+            datetime: DatetimeField::Number(0),
             active_orders: HashMap::new(),
             canceled_orders: HashMap::new(),
             trades: HashMap::new(),
@@ -71,7 +109,12 @@ impl Broker {
     }
 
     pub fn next(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
+        self.datetime = ticker.datetime.clone();
         self.process_active_orders(ticker)?;
+
+        if self.logging {
+            info!("{}", self);
+        }
 
         Ok(())
     }
@@ -83,7 +126,13 @@ impl Broker {
     }
 
     pub fn cancel_order(&mut self, id: OrderId) -> Result<(), BrokerError> {
-        self.active_orders.remove(&id);
+        if let Some(order) = self.active_orders.remove(&id) {
+            if let Some(callback) = order.on_cancel {
+                callback(self)?;
+            }
+        } else {
+            return Err(BrokerError::OrderIdNotFound);
+        }
 
         Ok(())
     }
@@ -151,6 +200,11 @@ impl Broker {
             }
         };
 
+        // Handle the `on_execute` callback
+        if let Some(callback) = order.on_execute {
+            callback(self)?;
+        }
+
         info!("Positions: {:?}", self.positions);
 
         Ok(())
@@ -165,20 +219,21 @@ impl Broker {
         let mut non_executed_active_orders = HashMap::new();
         for (id, order) in self.active_orders.clone() {
             match order.order_type {
-                OrderType::Market => self.execute_order(order, ticker)?,
+                OrderType::Market => {
+                    self.execute_order(order, ticker)?;
+                    continue;
+                }
                 OrderType::Limit(price) => match order.side {
                     OrderSide::Buy => {
                         if ticker.close <= price {
                             self.execute_order(order, ticker)?;
-                        } else {
-                            non_executed_active_orders.insert(id, order);
+                            continue;
                         }
                     }
                     OrderSide::Sell => {
                         if ticker.close >= price {
                             self.execute_order(order, ticker)?;
-                        } else {
-                            non_executed_active_orders.insert(id, order);
+                            continue;
                         }
                     }
                 },
@@ -186,15 +241,13 @@ impl Broker {
                     OrderSide::Buy => {
                         if ticker.close >= price {
                             self.execute_order(order, ticker)?;
-                        } else {
-                            non_executed_active_orders.insert(id, order);
+                            continue;
                         }
                     }
                     OrderSide::Sell => {
                         if ticker.close <= price {
                             self.execute_order(order, ticker)?;
-                        } else {
-                            non_executed_active_orders.insert(id, order);
+                            continue;
                         }
                     }
                 },
@@ -208,10 +261,18 @@ impl Broker {
                     todo!("Implement the rest of the order types");
                 }
             }
+
+            // This code will be executed if no order was executed.
+            // Otherwise, we skip over this block with the use of `continue`.
+            non_executed_active_orders.insert(id, order);
         }
 
         self.active_orders = non_executed_active_orders;
 
         Ok(())
+    }
+
+    pub fn get_datetime(&self) -> DatetimeField {
+        self.datetime.clone()
     }
 }
