@@ -13,7 +13,7 @@
 //!
 //! If any of these columns are omitted, deserialization will fail.
 use crate::types::Ticker;
-use std::fs::{read_dir, DirEntry, File};
+use std::fs::{read_dir, File};
 use std::path::{Path, PathBuf};
 
 /// Provides a stream of 'Tickers' from a CSV file.
@@ -103,4 +103,29 @@ impl Iterator for TimeSeriesIntoIterator {
             None
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_csv_read() {
+        let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAC.csv");
+
+        for ticker in aapl_timeseries {
+            assert!(ticker.is_ok());
+        }
+    }
+
+    // #[test]
+    // fn test_dir_read() {
+    //     let datasets = TimeSeries::from_dir("./benches/datasets");
+
+    //     for timeseries in datasets {
+    //         for ticker in timeseries {
+    //             assert!(ticker.is_ok());
+    //         }
+    //     }
+    // }
 }

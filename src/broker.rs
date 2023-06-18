@@ -6,6 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 use log::info;
 use std::collections::HashMap;
 use std::fmt;
+use chrono::{DateTime, Duration, Utc, Date};
 
 type Symbol = String;
 
@@ -34,11 +35,10 @@ pub struct Broker {
     initial_cash: f32,
     commission: f32,
     leverage: f32,
-    trade_on_close: bool,
-    hedging: bool,
     exclusive_orders: bool,
+    hedging: bool,
     logging: bool,
-    datetime: DatetimeField,
+    datetime: DateTime<Utc>,
 
     /// Internal bookkeeping
     active_orders: HashMap<OrderId, Order>,
@@ -46,13 +46,14 @@ pub struct Broker {
     trades: HashMap<OrderId, Order>, // Keeps track of all the trades that were executed (orders that were filled)
     current_cash: f32,
     positions: HashMap<Symbol, Position>, // Keeps track of all the active positions
+    previous_ticker: Option<Ticker>
 }
 
 impl fmt::Display for Broker {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Broker: {}\nCurrent Cash:{}\nPositions:{:?}\n",
+            "Broker: {}\nCurrent Cash:{}\nPositions:{:?}",
             self.name, self.current_cash, self.positions
         )
     }
@@ -64,18 +65,16 @@ impl Broker {
     /// - `initial_cash` - The amount of cash to start with.
     /// - `commission` - The percentage of cash to be paid as commission for each trade. This value should be in [-0.1, 0.1].
     /// - [`margin`](https://www.interactivebrokers.com/en/trading/margin.php) - The percentage of cash to be used as margin for each trade. This value should be in [0, 1].
-    /// - `trade_on_close` - If `True`, allow trades to be executed on the close of a bar, rather than the next day.
+    /// - `exclusive_orders` - If `true`, each new order auto-closes the previous trade/position, making at most a single trade (long or short) in effect at each time.
     /// - [`hedging`](https://www.investopedia.com/terms/h/hedge.asp) - If `true`, allow trades in both directions simultaneously. If `false`, opposite-facing orders first close existing trades in a [FIFO] manner.
-    /// - `exclusive_orders` - If `true`, only one order can be active at a time. Thus, if other orders are active, the older orders will be canceled in place of the new one.
     /// - `logging` - If `true`, log all the broker's activity. Useful for debugging.
     pub fn new(
         name: &str,
         initial_cash: f32,
         commission: f32,
         margin: f32,
-        trade_on_close: bool,
-        hedging: bool,
         exclusive_orders: bool,
+        hedging: bool,
         logging: bool,
     ) -> Self {
         if initial_cash < 0.0 {
@@ -95,37 +94,46 @@ impl Broker {
             initial_cash,
             commission,
             leverage: 1.0 / margin,
-            trade_on_close,
-            hedging,
             exclusive_orders,
+            hedging,
             logging,
-            datetime: DatetimeField::Number(0),
+            datetime: Utc::now(),
             active_orders: HashMap::new(),
             canceled_orders: HashMap::new(),
             trades: HashMap::new(),
             current_cash: initial_cash,
             positions: HashMap::new(),
+            previous_ticker: None,
         }
     }
 
     pub fn next(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
-        self.datetime = ticker.datetime.clone();
-        self.process_active_orders(ticker)?;
-
         if self.logging {
-            info!("{}", self);
+            info!("Ticker: {}\nBroker State: {}\n", ticker, self);
         }
+
+        self.datetime = DateTime::from(ticker.datetime);
+        self.process_active_orders(ticker)?;
+        self.previous_ticker = Some(ticker.clone());
 
         Ok(())
     }
 
     pub fn submit_order(&mut self, id: OrderId, order: Order) -> Result<(), BrokerError> {
+        if self.logging {
+            info!("Order (submit): {}\n", order);
+        }
+
         self.active_orders.insert(id, order);
 
         Ok(())
     }
 
     pub fn cancel_order(&mut self, id: OrderId) -> Result<(), BrokerError> {
+        if self.logging {
+            info!("Order (cancel): {}\n", id);
+        }
+
         if let Some(order) = self.active_orders.remove(&id) {
             if let Some(callback) = order.on_cancel {
                 callback(self)?;
@@ -163,9 +171,6 @@ impl Broker {
                         },
                     );
                 }
-                // TODO: The ticker.close is not explicitly used
-                // For example, in a limit order, the price is set.
-                // Also, we must factor in the commission.
                 info!("Bought {} shares @ {}", order.quantity, ticker.close);
                 self.current_cash -= order.quantity * ticker.close;
             }
@@ -223,43 +228,141 @@ impl Broker {
                     self.execute_order(order, ticker)?;
                     continue;
                 }
-                OrderType::Limit(price) => match order.side {
+                OrderType::Limit(limit) => match order.side {
                     OrderSide::Buy => {
-                        if ticker.close <= price {
+                        if ticker.close <= limit {
                             self.execute_order(order, ticker)?;
                             continue;
                         }
                     }
                     OrderSide::Sell => {
-                        if ticker.close >= price {
+                        if ticker.close >= limit {
                             self.execute_order(order, ticker)?;
                             continue;
                         }
                     }
                 },
-                OrderType::Stop(price) => match order.side {
+                OrderType::Stop(stop) => match order.side {
                     OrderSide::Buy => {
-                        if ticker.close >= price {
-                            self.execute_order(order, ticker)?;
+                        // Buy Stop Order turns into a Market Buy Order when the price is above the stop price
+                        if ticker.close >= stop {
+                            self.submit_order(id, Order {
+                                symbol: order.symbol,
+                                quantity: order.quantity,
+                                side: OrderSide::Buy,
+                                order_type: OrderType::Market,
+                                execution: order.execution,
+                                datetime: self.get_datetime(),
+                                on_execute: order.on_execute,
+                                on_cancel: order.on_cancel,
+                            })?;
                             continue;
                         }
                     }
                     OrderSide::Sell => {
-                        if ticker.close <= price {
-                            self.execute_order(order, ticker)?;
+                        // Sell Stop Order turns into a Market Sell Order when the price is below the stop price
+                        if ticker.close <= stop {
+                            self.submit_order(id, Order {
+                                symbol: order.symbol,
+                                quantity: order.quantity,
+                                side: OrderSide::Sell,
+                                order_type: OrderType::Market,
+                                execution: order.execution,
+                                datetime: self.get_datetime(),
+                                on_execute: order.on_execute,
+                                on_cancel: order.on_cancel,
+                            })?;
                             continue;
                         }
                     }
                 },
-                OrderType::MarketOnClose => {
-                    todo!("Implement logic to determine if the market is closing");
-                }
-                OrderType::MarketOnOpen => {
-                    todo!("Implement logic to determine if the market is opening");
-                }
-                _ => {
-                    todo!("Implement the rest of the order types");
-                }
+                OrderType::StopLimit(stop, limit) => match order.side {
+                    OrderSide::Buy => {
+                        // Buy Stop Order turns into a Limit Buy Order when the price is above the stop price and below the limit price
+                        if ticker.close >= stop && ticker.close < limit {
+                            self.submit_order(id, Order {
+                                symbol: order.symbol,
+                                quantity: order.quantity,
+                                side: OrderSide::Buy,
+                                order_type: OrderType::Limit(limit),
+                                execution: order.execution,
+                                datetime: self.get_datetime(),
+                                on_execute: order.on_execute,
+                                on_cancel: order.on_cancel,
+                            })?;
+                            continue;
+                        }
+                    }
+                    OrderSide::Sell => {
+                        // Sell Stop Order turns into a Limit Sell Order when the price is below the stop price and above the limit price
+                        if ticker.close <= stop && ticker.close > limit {
+                            self.submit_order(id, Order {
+                                symbol: order.symbol,
+                                quantity: order.quantity,
+                                side: OrderSide::Sell,
+                                order_type: OrderType::Limit(limit),
+                                execution: order.execution,
+                                datetime: self.get_datetime(),
+                                on_execute: order.on_execute,
+                                on_cancel: order.on_cancel,
+                            })?;
+                            continue;
+                        }
+                    }
+                },
+                OrderType::MOC => {
+                    if self.next_date() {
+                        if let Some(previous) = &self.previous_ticker.clone() {
+                            self.execute_order(order, previous)?;
+                            continue;
+                        }
+                    }
+                },
+                OrderType::MOO => {
+                    if self.next_date() {
+                        self.execute_order(order, ticker)?;
+                        continue;
+                    }
+                    todo!();
+                },
+                OrderType::LOC(limit) => {
+                    if self.next_date() {
+                        if let Some(previous) = &self.previous_ticker.clone() {
+                            match order.side {
+                                OrderSide::Buy => {
+                                    if ticker.close <= limit {
+                                        self.execute_order(order, previous)?;
+                                        continue;
+                                    }
+                                }
+                                OrderSide::Sell => {
+                                    if ticker.close >= limit {
+                                        self.execute_order(order, previous)?;
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }   
+                },
+                OrderType::LOO(limit) => {
+                    if self.next_date() {
+                        match order.side {
+                            OrderSide::Buy => {
+                                if ticker.close <= limit {
+                                    self.execute_order(order, ticker)?;
+                                    continue;
+                                }
+                            }
+                            OrderSide::Sell => {
+                                if ticker.close >= limit {
+                                    self.execute_order(order, ticker)?;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                },
             }
 
             // This code will be executed if no order was executed.
@@ -272,7 +375,15 @@ impl Broker {
         Ok(())
     }
 
-    pub fn get_datetime(&self) -> DatetimeField {
+    pub fn get_datetime(&self) -> DateTime<Utc> {
         self.datetime.clone()
+    }
+
+    /// Returns `true` if the current `Ticker` being processed is the beginning of a new trading day.
+    fn next_date(&self) -> bool {
+        if let Some(previous) = &self.previous_ticker {
+            return self.get_datetime() - DateTime::from(previous.datetime) > Duration::hours(8)
+        }
+        true
     }
 }

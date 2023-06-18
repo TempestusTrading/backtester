@@ -136,27 +136,3 @@ impl fmt::Display for BacktestResult {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_csv_read() {
-        let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAPL_1Y.csv");
-
-        for ticker in aapl_timeseries {
-            assert!(ticker.is_ok());
-        }
-    }
-
-    #[test]
-    fn test_dir_read() {
-        let datasets = TimeSeries::from_dir("./benches/datasets");
-
-        for timeseries in datasets {
-            for ticker in timeseries {
-                assert!(ticker.is_ok());
-            }
-        }
-    }
-}

@@ -37,7 +37,7 @@ impl Strategy for BuyAndHold {
                         quantity: 100.0,
                         side: OrderSide::Buy,
                         order_type: OrderType::Market,
-                        time: ticker.datetime.clone(),
+                        datetime: ticker.datetime.clone(),
                         execution: OrderExecutionStrategy::GTC,
                         on_execute: None,
                         on_cancel: None,
