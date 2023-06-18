@@ -37,7 +37,6 @@ pub struct Broker {
     leverage: f32,
     exclusive_orders: bool,
     hedging: bool,
-    logging: bool,
     datetime: DateTime<Utc>,
 
     /// Internal bookkeeping
@@ -81,7 +80,6 @@ impl Broker {
         margin: f32,
         exclusive_orders: bool,
         hedging: bool,
-        logging: bool,
     ) -> Self {
         if initial_cash < 0.0 {
             panic!("Broker: {} initial_cash should be positive.", name);
@@ -102,7 +100,6 @@ impl Broker {
             leverage: 1.0 / margin,
             exclusive_orders,
             hedging,
-            logging,
             datetime: Utc::now(),
             active_orders: HashMap::new(),
             canceled_orders: HashMap::new(),
@@ -114,9 +111,7 @@ impl Broker {
     }
 
     pub fn next(&mut self, ticker: &Ticker) -> Result<(), BrokerError> {
-        if self.logging {
-            info!("Ticker: {}\nBroker State: {}\n", ticker, self);
-        }
+        info!("Ticker: {}\nBroker State: {}\n", ticker, self);
 
         self.datetime = DateTime::from(ticker.datetime);
         self.process_active_orders(ticker)?;
@@ -126,9 +121,7 @@ impl Broker {
     }
 
     pub fn submit_order(&mut self, id: OrderId, order: Order) -> Result<(), BrokerError> {
-        if self.logging {
-            info!("Order (submit): {}\n", order);
-        }
+        info!("Order (submit): {}\n", order);
 
         self.active_orders.insert(id, order);
 
@@ -136,9 +129,7 @@ impl Broker {
     }
 
     pub fn cancel_order(&mut self, id: OrderId) -> Result<(), BrokerError> {
-        if self.logging {
-            info!("Order (cancel): {}\n", id);
-        }
+        info!("Order (cancel): {}\n", id);
 
         if let Some(order) = self.active_orders.remove(&id) {
             if let Some(callback) = order.on_cancel {
