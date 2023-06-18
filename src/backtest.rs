@@ -1,7 +1,12 @@
-use crate::{broker::Broker, strategy::{Strategy, StrategyError}, timeseries::TimeSeries, prelude::BrokerError};
-use std::time::{Duration, Instant};
-use std::fmt;
+use crate::{
+    broker::Broker,
+    prelude::BrokerError,
+    strategy::{Strategy, StrategyError},
+    timeseries::TimeSeries,
+};
 use std::ffi::OsString;
+use std::fmt;
+use std::time::{Duration, Instant};
 
 pub struct BacktestBuilder {
     feeds: Vec<TimeSeries>,
@@ -17,7 +22,7 @@ impl BacktestBuilder {
             strategies: Vec::new(),
         }
     }
-    
+
     pub fn add_feed(mut self, feed: TimeSeries) -> Self {
         self.feeds.push(feed);
         self
@@ -131,27 +136,3 @@ impl fmt::Display for BacktestResult {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_csv_read() {
-        let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAPL_1Y.csv");
-
-        for ticker in aapl_timeseries {
-            assert!(ticker.is_ok());
-        }
-    }
-
-    #[test]
-    fn test_dir_read() {
-        let datasets = TimeSeries::from_dir("./benches/datasets");
-
-        for timeseries in datasets {
-            for ticker in timeseries {
-                assert!(ticker.is_ok());
-            }
-        }
-    }
-}

@@ -11,11 +11,9 @@
 //!
 //! # [Fundamental Indicators](https://www.investopedia.com/terms/f/fundamentalindicator.asp)
 //!
-use serde_derive::{Deserialize, Serialize};
+use crate::types::Ticker;
 use dyn_clone::DynClone;
-use crate::{
-    types::{Ticker}, 
-};
+use serde_derive::{Deserialize, Serialize};
 
 pub(crate) use std::fmt;
 

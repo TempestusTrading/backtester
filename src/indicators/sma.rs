@@ -1,5 +1,4 @@
 use super::*;
-use crate::types::DatetimeField;
 
 /// # [Simple Moving Average](https://www.investopedia.com/terms/s/sma.asp)
 #[derive(Clone)]
@@ -79,6 +78,7 @@ impl Indicator for SMA {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Utc;
 
     fn get_ticks(n: usize) -> Vec<Ticker> {
         let mut ticks = Vec::new();
@@ -89,7 +89,7 @@ mod tests {
                 low: 0.5,
                 close: 1.5,
                 volume: 100,
-                datetime: DatetimeField::Number(i as u64),
+                datetime: Utc::now(),
             });
         }
         ticks

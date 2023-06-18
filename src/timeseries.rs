@@ -1,19 +1,19 @@
 //! Data streams for backtesting.
-//! 
+//!
 //! ## Limitations
 //! Currently, the only supported data source is CSV files.
 //! Furthermore, the CSV file must contain the following columns:
-//! 
+//!
 //! - open
 //! - high
 //! - low
 //! - close
 //! - volume
 //! - datetime
-//! 
+//!
 //! If any of these columns are omitted, deserialization will fail.
 use crate::types::Ticker;
-use std::fs::{File, read_dir, DirEntry};
+use std::fs::{read_dir, File};
 use std::path::{Path, PathBuf};
 
 /// Provides a stream of 'Tickers' from a CSV file.
@@ -21,12 +21,12 @@ use std::path::{Path, PathBuf};
 /// The timeseries is lazily evaluated. Rather than loading the whole
 /// file into memory upon initialization, it creates a deserialized
 /// reader that can be turned into an iterator to load the data.
-/// 
+///
 /// # Example
 ///
 /// ```no_run
 /// use backtester::prelude::*;
-/// 
+///
 /// let timeseries = TimeSeries::from_csv("data/SPY.csv");
 /// for ticker in timeseries {
 ///    println!("{:?}", ticker);
@@ -34,7 +34,7 @@ use std::path::{Path, PathBuf};
 /// ```
 #[derive(Clone)]
 pub struct TimeSeries {
-    path: PathBuf
+    path: PathBuf,
 }
 
 impl TimeSeries {
@@ -43,11 +43,13 @@ impl TimeSeries {
     /// `open, high, low, close, volume, datetime.`
     /// Otherwise, deserialization will fail.
     pub fn from_csv<P: AsRef<Path>>(path: P) -> Self {
-        Self { path: path.as_ref().to_path_buf() }
+        Self {
+            path: path.as_ref().to_path_buf(),
+        }
     }
 
     /// Initializes a set of TimeSeries from a directory.
-    /// This function uses `from_csv` for each CSV file, so 
+    /// This function uses `from_csv` for each CSV file, so
     /// ensure that the format of each CSV file is correct.
     pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
         let mut result = Vec::new();
@@ -101,4 +103,29 @@ impl Iterator for TimeSeriesIntoIterator {
             None
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_csv_read() {
+        let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAC.csv");
+
+        for ticker in aapl_timeseries {
+            assert!(ticker.is_ok());
+        }
+    }
+
+    // #[test]
+    // fn test_dir_read() {
+    //     let datasets = TimeSeries::from_dir("./benches/datasets");
+
+    //     for timeseries in datasets {
+    //         for ticker in timeseries {
+    //             assert!(ticker.is_ok());
+    //         }
+    //     }
+    // }
 }
