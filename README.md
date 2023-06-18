@@ -38,8 +38,8 @@ use backtester::prelude::*;
 use backtester::strategy::SMACrossover;
 
 fn main() -> Result<(), BacktestError> {
-	let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAPL_1Y.csv");
-	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false);
+	let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAC.csv");
+	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false, false);
 	let strategy = Box::new(SMACrossover::default());
 	let backtest = BacktestBuilder::new()
 	               .add_feed(aapl_timeseries)
@@ -54,6 +54,8 @@ fn main() -> Result<(), BacktestError> {
 
     Ok(())
 }
+
+
 ```
 
 #### Defining Custom Indicators
@@ -125,7 +127,10 @@ impl Strategy for DumbStrategy {
                quantity: 100.0,
                side: OrderSide::Buy,
                order_type: OrderType::Market,
-               time: ticker.datetime.clone(),
+               datetime: ticker.datetime.clone(),
+               execution: OrderExecutionStrategy::GTC,
+               on_execute: None,
+               on_cancel: None,
         })?;
       }
 	  Ok(())
