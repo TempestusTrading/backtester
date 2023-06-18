@@ -51,11 +51,17 @@ pub struct Broker {
 
 impl fmt::Display for Broker {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}\nCurrent Cash:{}\nPositions:{:?}",
-            self.name, self.current_cash, self.positions
-        )
+        let mut result = String::new();
+        result.push_str(&format!("{}\n", self.name));
+        result.push_str(&format!("Initial Cash: {}\n", self.initial_cash));
+        result.push_str(&format!("Commission: {}\n", self.commission));
+        result.push_str(&format!("Leverage: {}\n", self.leverage));
+        result.push_str(&format!("Exclusive Orders: {}\n", self.exclusive_orders));
+        result.push_str(&format!("Hedging: {}\n", self.hedging));
+        result.push_str(&format!("Trades: {}\n", self.trades.len()));
+        result.push_str(&format!("Current Cash: {}\n", self.current_cash));
+        result.push_str(&format!("Positions: {}\n", self.positions.len()));
+        write!(f, "{}", result)
     }
 }
 
