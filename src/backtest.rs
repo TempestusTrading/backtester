@@ -129,7 +129,7 @@ impl fmt::Display for BacktestResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut result = String::new();
         result.push_str(&format!("Feed: {}\n", self.feed_path.to_str().unwrap()));
-        // result.push_str(&format!("Broker: {}\n", self.broker));
+        result.push_str(&format!("Broker: {}\n", self.broker));
         result.push_str(&format!("Strategy: {}\n", self.strategy));
         result.push_str(&format!("Runtime: {:?}\n", self.runtime));
         write!(f, "{}", result)
