@@ -53,7 +53,7 @@ impl fmt::Display for Broker {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Broker: {}\nCurrent Cash:{}\nPositions:{:?}",
+            "{}\nCurrent Cash:{}\nPositions:{:?}",
             self.name, self.current_cash, self.positions
         )
     }
