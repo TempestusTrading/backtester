@@ -12,7 +12,10 @@
 //! - datetime
 //!
 //! If any of these columns are omitted, deserialization will fail.
-use crate::types::Ticker;
+use crate::{
+    types::Ticker,
+    series::Series
+};
 use std::fs::{read_dir, File};
 use std::path::{Path, PathBuf};
 
@@ -37,17 +40,19 @@ pub struct TimeSeries {
     path: PathBuf,
 }
 
-impl TimeSeries {
+impl Series for TimeSeries {
     /// Initializes a new TimeSeries from a CSV file.
     /// Ensure that the CSV file contains the following columns:
     /// `open, high, low, close, volume, datetime.`
     /// Otherwise, deserialization will fail.
-    pub fn from_csv<P: AsRef<Path>>(path: P) -> Self {
+    fn from_csv<P: AsRef<Path>>(path: P) -> Self {
         Self {
             path: path.as_ref().to_path_buf(),
         }
     }
+}
 
+impl TimeSeries {
     /// Initializes a set of TimeSeries from a directory.
     /// This function uses `from_csv` for each CSV file, so
     /// ensure that the format of each CSV file is correct.
@@ -103,29 +108,4 @@ impl Iterator for TimeSeriesIntoIterator {
             None
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_csv_read() {
-        let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAC.csv");
-
-        for ticker in aapl_timeseries {
-            assert!(ticker.is_ok());
-        }
-    }
-
-    // #[test]
-    // fn test_dir_read() {
-    //     let datasets = TimeSeries::from_dir("./benches/datasets");
-
-    //     for timeseries in datasets {
-    //         for ticker in timeseries {
-    //             assert!(ticker.is_ok());
-    //         }
-    //     }
-    // }
 }

@@ -3,12 +3,14 @@ use crate::{
     prelude::BrokerError,
     strategy::{Strategy, StrategyError},
     timeseries::TimeSeries,
+    series::Series,
 };
 use std::ffi::OsString;
 use std::fmt;
 use std::time::{Duration, Instant};
 
 pub struct BacktestBuilder {
+    // series: Vec<Box<dyn Series>>,
     feeds: Vec<TimeSeries>,
     brokers: Vec<Broker>,
     strategies: Vec<Box<dyn Strategy>>,

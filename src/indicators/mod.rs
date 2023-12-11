@@ -40,5 +40,7 @@ pub trait Indicator: fmt::Display + DynClone {
 // Re-export all indicators
 mod rsi;
 mod sma;
+mod effr;
 pub use rsi::RSI;
 pub use sma::SMA;
+pub use effr::EFFR;
