@@ -35,6 +35,77 @@ use std::path::{Path, PathBuf};
 ///    println!("{:?}", ticker);
 /// }
 /// ```
+
+  printf("%d %d %d %d", ncols, nrows, ndata, dim);
+  pub struct TimeSeries<T> {
+    path: PathBuf,
+    _phantom: std::marker::PhantomData<T>,
+}
+
+impl<T> Series for TimeSeries<T> {
+    fn from_csv<P: AsRef<Path>>(path: P) -> Self {
+        Self {
+            path: path.as_ref().to_path_buf(),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<T> TimeSeries<T> {
+    pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
+        let mut result = Vec::new();
+        if let Ok(entries) = read_dir(path) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    if let Some(extension) = entry.path().extension() {
+                        if extension == "csv" {
+                            result.push(Self::from_csv(entry.path()));
+                        }
+                    }
+                }
+            }
+        } else {
+            panic!("Cannot find directory");
+        }
+        result
+    }
+
+    pub fn get_path(&self) -> &PathBuf {
+        &self.path
+    }
+}
+
+impl<T> IntoIterator for TimeSeries<T> {
+    type Item = Result<T, Error>;
+    type IntoIter = TimeSeriesIntoIterator<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let reader: csv::DeserializeRecordsIntoIter<File, T> =
+            csv::Reader::from_path(self.path.clone())
+                .expect("Cannot not find file")
+                .into_deserialize::<T>();
+        TimeSeriesIntoIterator {
+            deserialized_reader: reader,
+        }
+    }
+}
+
+pub struct TimeSeriesIntoIterator<T> {
+    deserialized_reader: csv::DeserializeRecordsIntoIter<File, T>,
+}
+
+impl<T> Iterator for TimeSeriesIntoIterator<T> {
+    type Item = Result<T, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(ticker) = self.deserialized_reader.next() {
+            Some(ticker)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct TimeSeries {
     path: PathBuf,
