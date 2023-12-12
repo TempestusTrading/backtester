@@ -11,7 +11,6 @@ use std::time::{Duration, Instant};
 use std::collections::HashMap;
 
 pub struct BacktestBuilder {
-    indicators: Vec<Box<dyn Indicator<Result = i32>>>,
     feeds: Vec<TimeSeries>,
     brokers: Vec<Broker>,
     strategies: Vec<Box<dyn Strategy>>,
@@ -20,16 +19,10 @@ pub struct BacktestBuilder {
 impl BacktestBuilder {
     pub fn new() -> Self {
         Self {
-            indicators: Vec::new(),
             feeds: Vec::new(),
             brokers: Vec::new(),
             strategies: Vec::new(),
         }
-    }
-
-    pub fn add_indicator(mut self, indicator: Box<dyn Indicator<Result = i32>>) -> Self {
-        self.indicators.push(indicator);
-        self
     }
 
     pub fn add_feed(mut self, feed: TimeSeries) -> Self {
@@ -62,7 +55,6 @@ impl BacktestBuilder {
             for broker in &self.brokers {
                 for feed in &self.feeds {
                     let backtest = Backtest::new(
-                        self.indicators.iter().map(|item| dyn_clone::clone_box(&**item)).collect(),
                         feed.clone(),
                         broker.clone(),
                         dyn_clone::clone_box(&*strategy),
@@ -76,7 +68,6 @@ impl BacktestBuilder {
 }
 
 pub struct Backtest {
-    indicators: Vec<Box<dyn Indicator<Result = i32>>>,
     feed: TimeSeries,
     broker: Broker,
     strategy: Box<dyn Strategy>,
@@ -102,9 +93,8 @@ impl From<BrokerError> for BacktestError {
 }
 
 impl Backtest {
-    pub fn new(indicators: Vec<Box<dyn Indicator<Result = i32>>>, feed: TimeSeries, broker: Broker, strategy: Box<dyn Strategy>) -> Self {
+    pub fn new(feed: TimeSeries, broker: Broker, strategy: Box<dyn Strategy>) -> Self {
         Self {
-            indicators,
             feed,
             broker,
             strategy,
@@ -118,11 +108,6 @@ impl Backtest {
         for ticker in self.feed {
             let ticker = ticker.expect("Failed to parse ticker.");
             self.broker.next(&ticker)?;
-            // for indicator in self.indicators {
-                // if indicator.update(&ticker) {
-                // self.strategy.on_indicator(indicator)?;
-                // };
-            // }
             self.strategy.on_ticker(&ticker, &mut self.broker)?;
         }
 

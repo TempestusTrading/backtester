@@ -133,10 +133,6 @@
 //!       }   
 //! 	  Ok(())
 //!    }  
-//! 
-//!    fn on_indicator(&mut self, indicator: Box<dyn Indicator<Result = i32>>) -> Result<(), StrategyError> {
-//!       Ok(())
-//!    }
 //! }
 //! ```
 //!

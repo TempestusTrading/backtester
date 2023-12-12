@@ -189,10 +189,6 @@ impl fmt::Display for OrderExecutionStrategy {
 ///         )?;
 ///         Ok(())
 ///     }
-/// 
-///     fn on_indicator(&mut self, indicator: Box<dyn Indicator<Result = i32>>) -> Result<(), StrategyError> {
-///         Ok(())
-///     }
 /// }
 /// ```
 /// 
@@ -244,10 +240,6 @@ impl fmt::Display for OrderExecutionStrategy {
 ///                 on_cancel: None,
 ///             },
 ///         )?;
-///         Ok(())
-///     }
-/// 
-///     fn on_indicator(&mut self, indicator: Box<dyn Indicator<Result = i32>>) -> Result<(), StrategyError> {
 ///         Ok(())
 ///     }
 /// }
