@@ -1,182 +1,45 @@
-//! Data streams for backtesting.
-//!
-//! ## Limitations
-//! Currently, the only supported data source is CSV files.
-//! Furthermore, the CSV file must contain the following columns:
-//!
-//! - open
-//! - high
-//! - low
-//! - close
-//! - volume
-//! - datetime
-//!
-//! If any of these columns are omitted, deserialization will fail.
+///! Trait Stream for Backtesting 
+///! 
+///! This trait is used to create custom streams of data for backtesting. For example,
+///! if you wanted to load a stream of macroeconomic data, you could implement this trait
+///! for your custom data type. 
+///! If you are looking to create a stream of ticker data, use the `TimeSeries` struct.
+use std::path::Path;
+use std::fs::read_dir;
+
 use crate::{
-    types::Ticker,
-    series::Series
+	series::Series,
+	types::Ticker,
 };
-use std::fs::{read_dir, File};
-use std::path::{Path, PathBuf};
 
-/// Provides a stream of 'Tickers' from a CSV file.
-/// ## Notice:
-/// The timeseries is lazily evaluated. Rather than loading the whole
-/// file into memory upon initialization, it creates a deserialized
-/// reader that can be turned into an iterator to load the data.
-///
-/// # Example
-///
-/// ```no_run
-/// use backtester::prelude::*;
-///
-/// let timeseries = TimeSeries::from_csv("data/SPY.csv");
-/// for ticker in timeseries {
-///    println!("{:?}", ticker);
-/// }
+/// Provides a flexible stream of data for backtesting.
+/// 
+/// # Example 
 /// ```
-
-  printf("%d %d %d %d", ncols, nrows, ndata, dim);
-  pub struct TimeSeries<T> {
-    path: PathBuf,
-    _phantom: std::marker::PhantomData<T>,
-}
-
-impl<T> Series for TimeSeries<T> {
-    fn from_csv<P: AsRef<Path>>(path: P) -> Self {
-        Self {
-            path: path.as_ref().to_path_buf(),
-            _phantom: std::marker::PhantomData,
-        }
-    }
-}
-
-impl<T> TimeSeries<T> {
-    pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
-        let mut result = Vec::new();
-        if let Ok(entries) = read_dir(path) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    if let Some(extension) = entry.path().extension() {
-                        if extension == "csv" {
-                            result.push(Self::from_csv(entry.path()));
-                        }
-                    }
-                }
-            }
-        } else {
-            panic!("Cannot find directory");
-        }
-        result
-    }
-
-    pub fn get_path(&self) -> &PathBuf {
-        &self.path
-    }
-}
-
-impl<T> IntoIterator for TimeSeries<T> {
-    type Item = Result<T, Error>;
-    type IntoIter = TimeSeriesIntoIterator<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        let reader: csv::DeserializeRecordsIntoIter<File, T> =
-            csv::Reader::from_path(self.path.clone())
-                .expect("Cannot not find file")
-                .into_deserialize::<T>();
-        TimeSeriesIntoIterator {
-            deserialized_reader: reader,
-        }
-    }
-}
-
-pub struct TimeSeriesIntoIterator<T> {
-    deserialized_reader: csv::DeserializeRecordsIntoIter<File, T>,
-}
-
-impl<T> Iterator for TimeSeriesIntoIterator<T> {
-    type Item = Result<T, Error>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(ticker) = self.deserialized_reader.next() {
-            Some(ticker)
-        } else {
-            None
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct TimeSeries {
-    path: PathBuf,
-}
-
-impl Series for TimeSeries {
-    /// Initializes a new TimeSeries from a CSV file.
-    /// Ensure that the CSV file contains the following columns:
-    /// `open, high, low, close, volume, datetime.`
-    /// Otherwise, deserialization will fail.
-    fn from_csv<P: AsRef<Path>>(path: P) -> Self {
-        Self {
-            path: path.as_ref().to_path_buf(),
-        }
-    }
-}
+/// use backtester::prelude::*;
+/// 
+/// ```
+pub type TimeSeries = Series<Ticker>;
 
 impl TimeSeries {
-    /// Initializes a set of TimeSeries from a directory.
-    /// This function uses `from_csv` for each CSV file, so
-    /// ensure that the format of each CSV file is correct.
-    pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
-        let mut result = Vec::new();
-        if let Ok(entries) = read_dir(path) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    if let Some(extension) = entry.path().extension() {
-                        if extension == "csv" {
-                            result.push(Self::from_csv(entry.path()));
-                        }
-                    }
-                }
-            }
-        } else {
-            panic!("Cannot find directory");
-        }
-        result
-    }
-
-    pub fn get_path(&self) -> &PathBuf {
-        &self.path
-    }
-}
-
-impl IntoIterator for TimeSeries {
-    type Item = Result<Ticker, csv::Error>;
-    type IntoIter = TimeSeriesIntoIterator;
-
-    fn into_iter(self) -> Self::IntoIter {
-        let reader: csv::DeserializeRecordsIntoIter<File, Ticker> =
-            csv::Reader::from_path(self.path.clone())
-                .expect(&format!("Cannot not find file"))
-                .into_deserialize::<Ticker>();
-        TimeSeriesIntoIterator {
-            deserialized_reader: reader,
-        }
-    }
-}
-
-pub struct TimeSeriesIntoIterator {
-    deserialized_reader: csv::DeserializeRecordsIntoIter<File, Ticker>,
-}
-
-impl Iterator for TimeSeriesIntoIterator {
-    type Item = Result<Ticker, csv::Error>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(ticker) = self.deserialized_reader.next() {
-            Some(ticker)
-        } else {
-            None
-        }
-    }
+  /// Initializes a set of TimeSeries from a directory.
+  /// This function uses `from_csv` for each CSV file, so
+  /// ensure that the format of each CSV file is correct.
+  pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
+      let mut result = Vec::new();
+      if let Ok(entries) = read_dir(path) {
+          for entry in entries {
+              if let Ok(entry) = entry {
+                  if let Some(extension) = entry.path().extension() {
+                      if extension == "csv" {
+                          result.push(Self::from_csv(entry.path()));
+                      }
+                  }
+              }
+          }
+      } else {
+          panic!("Cannot find directory");
+      }
+      result
+  }
 }

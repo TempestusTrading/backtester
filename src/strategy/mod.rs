@@ -33,6 +33,9 @@ pub trait Strategy: fmt::Display + DynClone {
     /// Called by the broker for each step in the backtest. The strategy should
     /// use the ticker data to make trading decisions and send orders to the broker.
     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError>;
+
+    /// Called by the broker whenever an indicator is updated.
+    fn on_indicator(&mut self, indicator: Box<dyn Indicator<Result = i32>>) -> Result<(), StrategyError>;
 }
 
 mod buy_and_hold;

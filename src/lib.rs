@@ -133,6 +133,10 @@
 //!       }   
 //! 	  Ok(())
 //!    }  
+//! 
+//!    fn on_indicator(&mut self, indicator: Box<dyn Indicator<Result = i32>>) -> Result<(), StrategyError> {
+//!       Ok(())
+//!    }
 //! }
 //! ```
 //!
@@ -141,8 +145,8 @@ mod backtest;
 pub mod broker;
 pub mod indicators;
 pub mod strategy;
-pub mod timeseries;
 pub mod series;
+pub mod timeseries;
 mod types;
 
 pub mod prelude {
@@ -150,7 +154,7 @@ pub mod prelude {
     pub use crate::broker::*;
     pub use crate::indicators::*;
     pub use crate::strategy::*;
-    pub use crate::timeseries::*;
     pub use crate::series::*;
+    pub use crate::timeseries::*;
     pub use crate::types::*;
 }

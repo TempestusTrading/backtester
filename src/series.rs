@@ -1,42 +1,53 @@
-///! Trait Stream for Backtesting 
-///! 
-///! This trait is used to create custom streams of data for backtesting. For example,
-///! if you wanted to load a stream of macroeconomic data, you could implement this trait
-///! for your custom data type. 
-///! If you are looking to create a stream of ticker data, use the `TimeSeries` struct.
-use std::path::{Path, PathBuf};
+//! Data streams for backtesting.
+//!
+//! ## Limitations
+//! Currently, the only supported data source is CSV files.
+//! Furthermore, the CSV file must contain the following columns:
+//!
+//! - open
+//! - high
+//! - low
+//! - close
+//! - volume
+//! - datetime
+//!
+//! If any of these columns are omitted, deserialization will fail.
 use std::fs::File;
-use csv::Error;
+use std::path::{Path, PathBuf};
 
-/// Provides a flexible stream of data for backtesting.
-/// 
-/// # Example 
-/// ```
+/// Provides a stream of 'Tickers' from a CSV file.
+/// ## Notice:
+/// The timeseries is lazily evaluated. Rather than loading the whole
+/// file into memory upon initialization, it creates a deserialized
+/// reader that can be turned into an iterator to load the data.
+///
+/// # Example
+///
+/// ```no_run
 /// use backtester::prelude::*;
-/// 
+///
+/// let timeseries = TimeSeries::from_csv("data/SPY.csv");
+/// for ticker in timeseries {
+///    println!("{:?}", ticker);
+/// }
 /// ```
-pub struct TimeSeries<T> {
+#[derive(Clone)]
+pub struct Series<T: serde::de::DeserializeOwned> {
     path: PathBuf,
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> TimeSeries<T> {
-    pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
-        let mut result = Vec::new();
-        if let Ok(entries) = read_dir(path) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    if let Some(extension) = entry.path().extension() {
-                        if extension == "csv" {
-                            result.push(Self::from_csv(entry.path()));
-                        }
-                    }
-                }
-            }
-        } else {
-            panic!("Cannot find directory");
+impl<T> Series<T>
+where T: serde::de::DeserializeOwned {
+    /// Initializes a new TimeSeries from a CSV file.
+    /// Ensure that the CSV file contains the following columns:
+    /// `open, high, low, close, volume, datetime.`
+    /// Otherwise, deserialization will fail.
+    pub fn from_csv<P: AsRef<Path>>(path: P) -> Self {
+        Self {
+            path: path.as_ref().to_path_buf(),
+            _phantom: std::marker::PhantomData,
         }
-        result
     }
 
     pub fn get_path(&self) -> &PathBuf {
@@ -44,27 +55,29 @@ impl<T> TimeSeries<T> {
     }
 }
 
-impl<T> IntoIterator for TimeSeries<T> {
-    type Item = Result<T, Error>;
-    type IntoIter = TimeSeriesIntoIterator<T>;
+impl<T> IntoIterator for Series<T>
+where T: serde::de::DeserializeOwned {
+    type Item = Result<T, csv::Error>;
+    type IntoIter = SeriesIntoIterator<T>;
 
     fn into_iter(self) -> Self::IntoIter {
         let reader: csv::DeserializeRecordsIntoIter<File, T> =
             csv::Reader::from_path(self.path.clone())
-                .expect("Cannot not find file")
+                .expect(&format!("Cannot not find file"))
                 .into_deserialize::<T>();
-        TimeSeriesIntoIterator {
+        SeriesIntoIterator {
             deserialized_reader: reader,
         }
     }
 }
 
-pub struct TimeSeriesIntoIterator<T> {
+pub struct SeriesIntoIterator<T> {
     deserialized_reader: csv::DeserializeRecordsIntoIter<File, T>,
 }
 
-impl<T> Iterator for TimeSeriesIntoIterator<T> {
-    type Item = Result<T, Error>;
+impl<T> Iterator for SeriesIntoIterator<T> 
+where T: serde::de::DeserializeOwned {
+    type Item = Result<T, csv::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(ticker) = self.deserialized_reader.next() {
