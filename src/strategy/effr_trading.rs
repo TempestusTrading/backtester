@@ -24,7 +24,7 @@ use crate::{
 #[derive(Clone)]
 pub struct EFFRTradingBuilder {
 	bought: bool,
-	// effr: Series::<DFF>,
+	effr: EFFR,
 	scale_factor: f32 // The scale factor is used to determine the position size.
 }
 

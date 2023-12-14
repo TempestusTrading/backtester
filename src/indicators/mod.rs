@@ -15,9 +15,7 @@ use crate::{
     types::Ticker,
     series::Series,
 };
-use dyn_clone::DynClone;
 use serde_derive::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 
 pub(crate) use std::fmt;
 

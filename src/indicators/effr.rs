@@ -3,10 +3,10 @@ use crate::{
 	util::serde_ext::*,
 	series::SeriesIntoIterator
 };
-use chrono::DateTime;
+use chrono::{DateTime, Utc};
 use std::path::Path;	
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug)]
 struct DFF {
 	#[serde(rename = "DFF")]
 	dff: f32,
@@ -23,6 +23,7 @@ pub struct EFFR {
 	previous: Option<DFF>,
 	current: Option<f32>,
 	date: DateTime<Utc>,
+	series: Series<DFF>,
 	stream: SeriesIntoIterator<DFF>
 }
 
@@ -38,7 +39,20 @@ impl EFFR {
 			previous: None,
 			current: None,
 			date: DateTime::from_timestamp(0, 0).unwrap(),
-			stream: Series::<DFF>::from_csv(path).into_iter()
+			series: Series::<DFF>::from_csv(&path),
+			stream: Series::<DFF>::from_csv(&path).into_iter()
+		}
+	}
+}
+
+impl Clone for EFFR {
+	fn clone(&self) -> Self {
+		Self {
+			previous: self.previous.clone(),
+			current: self.current.clone(),
+			date: self.date.clone(),
+			series: self.series.clone(),
+			stream: self.series.clone().into_iter()
 		}
 	}
 }
