@@ -1,4 +1,7 @@
-use crate::broker::{Broker, BrokerError};
+use crate::{
+    broker::{Broker, BrokerError},
+    util::deserializers::*,
+};
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use chrono::{DateTime, Utc};
@@ -22,7 +25,7 @@ pub struct Trade {
     pub quantity: f32,
     pub price: f32,
     pub commission: f32,
-    #[serde(with = "backtester_date_format")]
+    #[serde(with = "yyyy_mm_dd_hh_mm_ss")]
     pub datetime: DateTime<Utc>,
 }
 
@@ -34,7 +37,7 @@ pub struct Ticker {
     pub low: f32,
     pub close: f32,
     pub volume: u32,
-    #[serde(with = "backtester_date_format")]
+    #[serde(with = "yyyy_mm_dd_hh_mm_ss")]
     pub datetime: DateTime<Utc>,
 }
 
@@ -267,34 +270,5 @@ impl fmt::Display for Order {
             "Order: {} {} {} @ {} {}",
             self.side, self.quantity, self.symbol, self.order_type, self.datetime
         )
-    }
-}
-
-mod backtester_date_format {
-    use chrono::{DateTime, Utc, TimeZone};
-    use serde::{self, Deserialize, Serializer, Deserializer};
-
-    const FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
-
-    pub fn serialize<S>(
-        date: &DateTime<Utc>,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let s = format!("{}", date.format(FORMAT));
-        serializer.serialize_str(&s)
-    }
-
-    pub fn deserialize<'de, D>(
-        deserializer: D,
-    ) -> Result<DateTime<Utc>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let timestamp: i64 = Deserialize::deserialize(deserializer)?;
-        let naive_datetime = Utc.timestamp_opt(timestamp, 0).unwrap();
-        Ok(naive_datetime)
     }
 }

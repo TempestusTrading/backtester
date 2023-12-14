@@ -11,9 +11,13 @@
 //!
 //! # [Fundamental Indicators](https://www.investopedia.com/terms/f/fundamentalindicator.asp)
 //!
-use crate::types::Ticker;
+use crate::{
+    types::Ticker,
+    series::Series,
+};
 use dyn_clone::DynClone;
 use serde_derive::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
 
 pub(crate) use std::fmt;
 
@@ -25,7 +29,7 @@ pub enum IndicatorError {
 
 pub type IndicatorResult<T> = Result<T, IndicatorError>;
 
-pub trait Indicator: fmt::Display + DynClone {
+pub trait Indicator: fmt::Display {
     /// The type of value that the indicator returns.
     type Result;
 

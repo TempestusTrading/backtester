@@ -36,7 +36,7 @@
 //! use backtester::strategy::SMACrossover;
 //!
 //! fn main() -> Result<(), BacktestError> {
-//! 	let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/AAC.csv");
+//! 	let aapl_timeseries = TimeSeries::from_csv("./benches/datasets/timeseries/AAC.csv");
 //! 	let broker = Broker::new("Simple Backtest", 100_000.0, 0.0, 0.0, false, false);
 //! 	let strategy = Box::new(SMACrossover::default());
 //! 	let backtest = BacktestBuilder::new()
@@ -135,7 +135,6 @@
 //!    }  
 //! }
 //! ```
-//!
 
 mod backtest;
 pub mod broker;
@@ -144,6 +143,7 @@ pub mod strategy;
 pub mod series;
 pub mod timeseries;
 mod types;
+mod util;
 
 pub mod prelude {
     pub use crate::backtest::*;
