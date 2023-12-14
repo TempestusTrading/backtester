@@ -14,6 +14,7 @@
 //! If any of these columns are omitted, deserialization will fail.
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use crate::util::serde_ext::*;
 
 /// Provides a stream of 'Tickers' from a CSV file.
 /// ## Notice:

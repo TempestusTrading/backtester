@@ -1,12 +1,13 @@
 use super::*;
 use crate::{
-	util::deserializers::*,
+	util::serde_ext::*,
 	series::SeriesIntoIterator
 };
 use chrono::DateTime;
+use std::path::Path;	
 
 #[derive(Deserialize, Debug)]
-pub struct DFF {
+struct DFF {
 	#[serde(rename = "DFF")]
 	dff: f32,
 	#[serde(rename = "DATE")]
@@ -32,12 +33,12 @@ impl fmt::Display for EFFR {
 }
 
 impl EFFR {
-	pub fn new(stream: Series<DFF>) -> Self {
+	pub fn from_csv<P: AsRef<Path>>(path: P) -> Self {
 		Self {
 			previous: None,
 			current: None,
 			date: DateTime::from_timestamp(0, 0).unwrap(),
-			stream: stream.into_iter()
+			stream: Series::<DFF>::from_csv(path).into_iter()
 		}
 	}
 }
@@ -50,7 +51,6 @@ impl Indicator for EFFR {
 		// Remember the previous ticker.
 		while let Some(line) = self.stream.next() { 
 			if let Ok(update) = line {
-				println!("{:?}", update);
 			  // If the current update is after the ticker, we use the previous update.
 				if update.date >= ticker.datetime {
 					self.current = Some(update.dff);
@@ -85,31 +85,92 @@ mod tests {
 	use super::*;
 	use chrono::{NaiveDate, Utc};
 
+	fn get_date(year: i32, month: u32, day: u32) -> DateTime<Utc> {
+		let datetime = NaiveDate::from_ymd_opt(year, month, day)
+			.unwrap()
+			.and_hms_opt(0, 0, 0)
+			.unwrap()
+			.into();
+		DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc)
+	}
+	
+	/// We haven't even called update yet, so there is no value.
 	#[test]
 	fn no_update() {
-		let feed = Series::<DFF>::from_csv("./benches/datasets/indicators/DFF.csv");
-		let effr = EFFR::new(feed);
+		let effr = EFFR::from_csv("./benches/datasets/indicators/DFF.csv");
 		assert!(effr.get_value().is_err());
 	}
 
+	// We call the update function many times. All calls are for sequential dates and should be sometime
+	// in the middle of the data feed
 	#[test]
-	fn update() {
-		let feed = Series::<DFF>::from_csv("./benches/datasets/indicators/DFF.csv");
-		let mut effr = EFFR::new(feed);
-		let expected = 0.08;
-    let datetime = NaiveDate::from_ymd_opt(2013, 11, 06)
-			.unwrap()
-			.and_hms_opt(0, 0, 0)
-			.unwrap();
-		let datetime = DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc);
-		effr.update(&Ticker {
-			datetime: datetime,
+	fn middle() {
+		let mut effr = EFFR::from_csv("./benches/datasets/indicators/DFF.csv");
+		let datetimes = vec![
+			(get_date(2014, 02, 20), 0.07),
+			(get_date(2014, 03, 03), 0.07),
+			(get_date(2015, 02, 12), 0.12),
+			(get_date(2015, 09, 29), 0.13),
+			(get_date(2021, 03, 02), 0.07),
+			(get_date(2023, 09, 27), 5.33),
+		];
+		for (datetime, expected) in datetimes {
+			assert!(effr.update(&Ticker {
+				datetime,
+				open: 0.0,
+				high: 0.0,
+				low: 0.0,
+				close: 0.0,
+				volume: 0,
+			}).is_ok());
+			assert_eq!(effr.get_value().unwrap(), expected);
+		}
+	}
+
+	// We call the update function once with a date that is past the end of the data feed.
+	// The expected value should be an error since we do not want to extrapolate the data.
+	#[test]
+	fn end() {
+		let mut effr = EFFR::from_csv("./benches/datasets/indicators/DFF.csv");
+		let datetime = get_date(2025, 10, 20); // Feed only goes to 2023-11-06
+		assert!(effr.update(&Ticker {
+			datetime,
 			open: 0.0,
 			high: 0.0,
 			low: 0.0,
 			close: 0.0,
 			volume: 0,
-		}).unwrap();
-		assert_eq!(effr.get_value().unwrap(), expected);
+		}).is_err());
+		assert!(effr.get_value().is_err());
+	}
+
+	// Corner Case: We call the update function once with a date that is in the data feed.
+	// Then again with a date that is before the previous date.
+	// The expected value for the second update should be the exact same as the first
+	// since we have not advanced the global clock forward at all.
+	#[test]
+	fn second_before_first() {
+		let mut effr = EFFR::from_csv("./benches/datasets/indicators/DFF.csv");
+		let expected_on_first = 0.08; 
+		let first = get_date(2021, 10, 20); // Feed only goes to 2023-11-06
+		let second = get_date(2019, 10, 20); // Feed only goes to 2023-11-06
+		assert!(effr.update(&Ticker {
+			datetime: first,
+			open: 0.0,
+			high: 0.0,
+			low: 0.0,
+			close: 0.0,
+			volume: 0,
+		}).is_ok());
+		assert_eq!(effr.get_value().unwrap(), expected_on_first);
+		assert!(effr.update(&Ticker {
+			datetime: second,
+			open: 0.0,
+			high: 0.0,
+			low: 0.0,
+			close: 0.0,
+			volume: 0,
+		}).is_ok());
+		assert_eq!(effr.get_value().unwrap(), expected_on_first);
 	}
 }

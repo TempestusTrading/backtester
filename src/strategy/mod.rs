@@ -37,5 +37,7 @@ pub trait Strategy: fmt::Display + DynClone {
 
 mod buy_and_hold;
 mod sma_crossover;
+mod effr_trading;
 pub use buy_and_hold::BuyAndHold;
 pub use sma_crossover::SMACrossover;
+// pub use effr_trading::EFFRTrading;
