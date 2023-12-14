@@ -118,6 +118,10 @@
 //! }
 //!
 //! impl Strategy for DumbStrategy {
+//!    fn prepare(&mut self, broker: &mut Broker) -> Result<(), StrategyError> {
+//!        Ok(())
+//!    }  
+//! 
 //!    fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
 //!       if ticker.close > 100.0 {
 //!         broker.submit_order(1, Order {

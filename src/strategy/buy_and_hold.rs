@@ -26,6 +26,10 @@ impl fmt::Display for BuyAndHold {
 }
 
 impl Strategy for BuyAndHold {
+    fn prepare(&mut self, broker: &mut Broker) -> Result<(), StrategyError> {
+        Ok(())        
+    }
+
     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
         match self.bought {
             false => {

@@ -30,6 +30,9 @@ impl From<BrokerError> for StrategyError {
 /// Contains indicators that are updated with the ticker data and used to make
 /// trading decisions.
 pub trait Strategy: fmt::Display + DynClone {
+    /// Called by the broker before the start of the backtest. The strategy should
+    /// initialize any indicators that it needs to make trading decisions.
+    fn prepare(&mut self, broker: &mut Broker) -> Result<(), StrategyError>;
     /// Called by the broker for each step in the backtest. The strategy should
     /// use the ticker data to make trading decisions and send orders to the broker.
     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError>;

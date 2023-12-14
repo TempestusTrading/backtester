@@ -161,6 +161,10 @@ impl fmt::Display for OrderExecutionStrategy {
 /// # }
 /// 
 /// impl Strategy for StopLoss {
+///     fn prepare(&mut self, broker: &mut Broker) -> Result<(), StrategyError> {
+///         Ok(())
+///     }   
+/// 
 ///     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
 ///         broker.submit_order(
 ///             0,
@@ -214,6 +218,10 @@ impl fmt::Display for OrderExecutionStrategy {
 /// # }
 /// 
 /// impl Strategy for TakeProfit {
+///     fn prepare(&mut self, broker: &mut Broker) -> Result<(), StrategyError> {
+///         Ok(())
+///     }  
+/// 
 ///     fn on_ticker(&mut self, ticker: &Ticker, broker: &mut Broker) -> Result<(), StrategyError> {
 ///         broker.submit_order(
 ///             0,

@@ -376,6 +376,14 @@ impl Broker {
         self.datetime.clone()
     }
 
+    pub fn get_cash(&self) -> f32 {
+        self.current_cash
+    }
+
+    pub fn get_position(&self, symbol: &str) -> Option<Position> {
+        self.positions.get(symbol).cloned()
+    }
+
     /// Returns `true` if the current `Ticker` being processed is the beginning of a new trading day.
     fn next_date(&self) -> bool {
         if let Some(previous) = &self.previous_ticker {
